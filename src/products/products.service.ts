@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
@@ -12,15 +14,25 @@ import { ProductEntity } from './entities/product.entity';
 import { Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { UserEntity } from 'src/users/entities/user.entity';
-import { OrderStatus } from 'src/orders/enums/order-status.enum';
 import dataSource from 'db/data-source';
 import { OrdersService } from 'src/orders/orders.service';
+import { VariantEntity } from 'src/variants/entities/variant.entity';
+import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entity';
+import { VariantsService } from 'src/variants/variants.service';
+import { VariantItemsService } from 'src/variant_items/variant_items.service';
+import { CategoryEntity } from 'src/categories/entities/category.entity';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(VariantEntity)
+    private readonly variantRepository: Repository<VariantEntity>,
+    @InjectRepository(VariantItemEntity)
+    private readonly variantItemRepository: Repository<VariantItemEntity>,
     private readonly categoryService: CategoriesService,
     @Inject(forwardRef(() => OrdersService))
     private readonly orderService: OrdersService,
@@ -30,20 +42,54 @@ export class ProductsService {
     createProductDto: CreateProductDto,
     currentUser: UserEntity,
   ): Promise<ProductEntity> {
-    const category = await this.categoryService.findOne(
-      +createProductDto.categoryId,
-    );
-    const product = this.productRepository.create(createProductDto);
+    try {
+      const categories = [];
 
-    product.category = category;
-    product.addedBy = currentUser;
+      for (const categoryId of createProductDto.categoryId) {
+        const category = await this.categoryService.findOne(categoryId);
+        if (category) {
+          categories.push(category);
+        }
+      }
 
-    return await this.productRepository.save(product);
+      // tạo product
+      let product = this.productRepository.create(createProductDto);
+
+      product.category = categories;
+
+      product.addedBy = currentUser;
+
+      const savedProduct = await this.productRepository.save(product);
+
+      //variants
+      let sampleVariants = createProductDto.sampleVariants;
+
+      for (const variant of sampleVariants) {
+        //tạo và save variants
+        let createdVariant = this.variantRepository.create({
+          variantName: variant.variantName,
+          product: savedProduct,
+        });
+
+        createdVariant = await this.variantRepository.save(createdVariant);
+
+        for (const variantItems of variant.options) {
+          //tạo và save item variants
+          let optionItem = this.variantItemRepository.create(variantItems);
+          optionItem.variants = createdVariant;
+          optionItem = await this.variantItemRepository.save(optionItem);
+        }
+      }
+
+      return savedProduct;
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
   }
 
   async findAll(
     query: any,
-  ): Promise<{ products: any[]; totalProducts; limit }> {
+  ): Promise<{ products: any[]; totalProducts: any; limit: any }> {
     let filteredTotalProducts: number;
     let limit: number;
 
@@ -64,11 +110,15 @@ export class ProductsService {
       ])
       .groupBy('product.id,category.id');
 
+    const sample = await queryBuilder.getRawMany();
+
+    console.log(sample);
+
     const totalProducts = await queryBuilder.getCount();
 
     if (query.search) {
       const search = query.search;
-      queryBuilder.andWhere('product.title like :title', {
+      queryBuilder.andWhere('product.productName like :title', {
         title: `%${search}%`,
       });
     }
@@ -111,12 +161,52 @@ export class ProductsService {
     return { products, totalProducts, limit };
   }
 
+  // async getAllProducts(
+  //   query: any,
+  // ): Promise<{ products: any[]; totalProducts: any; limit: any }> {
+  //   let filteredTotalProducts: number;
+  //   let limit: number;
+
+  //   if (!query.limit) {
+  //     limit = 4;
+  //   } else {
+  //     limit = query.limit;
+  //   }
+
+  //   const queryBuilder = dataSource
+  //     .getRepository(ProductEntity)
+  //     .createQueryBuilder('product');
+
+  //   const sample = await queryBuilder.getRawMany();
+
+  //   const products = await this.productRepository.find({
+  //     relations: {
+  //       category: true,
+  //       reviews: true,
+  //       variants: {
+  //         options: true,
+  //       },
+  //     },
+  //   });
+
+  //   if (query.search) {
+  //     const search = query.search;
+  //   }
+
+  //   const totalProducts = products.length;
+
+  //   return { products, totalProducts, limit };
+  // }
+
   async findOne(id: number) {
     const product = await this.productRepository.findOne({
       where: { id: id },
       relations: {
         addedBy: true,
         category: true,
+        variants: {
+          options: true,
+        },
       },
       select: {
         addedBy: {
@@ -143,11 +233,20 @@ export class ProductsService {
     Object.assign(product, updateProductDto);
     product.addedBy = currentUser;
     if (updateProductDto.categoryId) {
-      const category = await this.categoryService.findOne(
-        +updateProductDto.categoryId,
-      );
-      product.category = category;
+      const categories = [];
+
+      for (const categoryId of updateProductDto.categoryId) {
+        const category = await this.categoryService.findOne(categoryId);
+        if (category) {
+          categories.push(category);
+        }
+      }
+
+      product.category = categories;
     }
+
+    //dang o day
+    product.updatedAt = new Date();
 
     return await this.productRepository.save(product);
   }
@@ -163,12 +262,41 @@ export class ProductsService {
 
   async updateStock(id: number, stock: number, status: string) {
     let product = await this.findOne(id);
-    if (status === OrderStatus.DELIVERED) {
-      product.stock -= stock;
-    } else {
-      product.stock += stock;
-    }
+    // if (status === OrderStatus.DELIVERED) {
+    //   product.stock -= stock;
+    // } else {
+    //   product.stock += stock;
+    // }
+    product.inventoryNumber = stock;
     product = await this.productRepository.save(product);
     return product;
+  }
+
+  // favourite products
+  async updateFavouriteProducts(productId: number, currentUser: UserEntity) {
+    let user = await this.userRepository.findOne({
+      where: {
+        id: currentUser.id,
+      },
+    });
+
+    if (user) {
+      let favouriteProducts = user.favouriteProducts;
+
+      let product = await this.productRepository.findOne({
+        where: {
+          id: productId,
+        },
+      });
+
+      if (product) {
+        favouriteProducts.push(product);
+        return await this.userRepository.save(favouriteProducts);
+      } else {
+        throw new NotFoundException('Product not exist.');
+      }
+    } else {
+      throw new NotFoundException('User not found.');
+    }
   }
 }

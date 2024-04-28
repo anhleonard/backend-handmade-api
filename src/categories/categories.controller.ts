@@ -23,7 +23,7 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
-  @Post()
+  @Post('/create')
   async create(
     @Body() createCategoryDto: CreateCategoryDto,
     @CurrentUser() currentUser: UserEntity,

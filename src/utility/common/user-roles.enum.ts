@@ -1,4 +1,26 @@
-export enum Roles{
-    ADMIN='admin',
-    USER='user'
+export enum Roles {
+  ADMIN = 'ADMIN',
+  USER = 'USER',
+  SELLER = 'SELLER',
+}
+
+export enum Genders {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+}
+
+export enum ProductCategories {
+  ACCESSORY = 'ACCESSORY', //phụ kiện
+  ARTISTIC_PAINTINGS = 'ARTISTIC_PAINTING',
+  BEAUTIFY = 'BEAUTIFY',
+  CLOTHES = 'CLOTHES',
+  SCARF = 'SCARF',
+  HANDCRAFTED_TOY = 'HANDCRAFTED_TOY',
+  GIFT = 'GIFT',
+  BAG = 'BAG',
+  JEWELRY = 'JEWELRY',
+  HOME = 'HOME',
+  FLOWER = 'FLOWER',
+  BABY_STUFF = 'BABY_STUFF',
+  DECORATION = 'DECORATION',
 }

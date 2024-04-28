@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -22,8 +23,8 @@ import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
-  @UseGuards(AuthenticationGuard)
-  @Post()
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Post('/create')
   async create(
     @Body() createReviewDto: CreateReviewDto,
     @CurrentUser() currentUser: UserEntity,
@@ -46,7 +47,8 @@ export class ReviewsController {
     return await this.reviewsService.findOne(+id);
   }
 
-  @Patch(':id')
+  //hàm create đã update rùi nha
+  @Put('/update/:id')
   update(@Param('id') id: string, @Body() updateReviewDto: UpdateReviewDto) {
     return this.reviewsService.update(+id, updateReviewDto);
   }

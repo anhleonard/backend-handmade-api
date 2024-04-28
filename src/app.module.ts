@@ -7,6 +7,9 @@ import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { OrdersModule } from './orders/orders.module';
+import { VariantsModule } from './variants/variants.module';
+import { VariantItemsModule } from './variant_items/variant_items.module';
+import { ShippingsModule } from './shippings/shippings.module';
 
 @Module({
   imports: [
@@ -16,6 +19,9 @@ import { OrdersModule } from './orders/orders.module';
     ProductsModule,
     ReviewsModule,
     OrdersModule,
+    VariantsModule,
+    VariantItemsModule,
+    ShippingsModule,
   ],
   controllers: [],
   providers: [],

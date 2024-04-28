@@ -9,9 +9,9 @@ export class OrderedProductsDto {
     { message: 'Price should be number & max decimal precission 2' },
   )
   @IsPositive({ message: 'Price can not be Negative.' })
-  product_unit_price: number;
+  productUnitPrice: number;
 
   @IsNumber({}, { message: 'Quantity should be number' })
   @IsPositive({ message: 'Quantity can not be Negative.' })
-  product_quantity: number;
+  productQuantity: number;
 }

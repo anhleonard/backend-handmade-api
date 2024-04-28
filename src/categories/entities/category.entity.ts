@@ -4,6 +4,8 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -15,18 +17,22 @@ import {
 export class CategoryEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
   @Column()
   title: string;
+
   @Column()
   description: string;
+
   @CreateDateColumn()
   createdAt: Timestamp;
+
   @UpdateDateColumn()
   updatedAt: Timestamp;
 
   @ManyToOne(() => UserEntity, (user) => user.categories)
   addedBy: UserEntity;
 
-  @OneToMany(() => ProductEntity, (prod) => prod.category)
+  @ManyToMany(() => ProductEntity, (prod) => prod.category)
   products: ProductEntity[];
 }

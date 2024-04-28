@@ -11,20 +11,20 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrderEntity } from './entities/order.entity';
 import { Repository } from 'typeorm';
-import { OrdersProductsEntity } from './entities/orders-products.entity';
-import { ShippingEntity } from './entities/shipping.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { ProductsService } from 'src/products/products.service';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { OrderStatus } from './enums/order-status.enum';
+import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
+import { OrderProductsEntity } from './entities/order-products.entity';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
-    @InjectRepository(OrdersProductsEntity)
-    private readonly opRepository: Repository<OrdersProductsEntity>,
+    @InjectRepository(OrderProductsEntity)
+    private readonly opRepository: Repository<OrderProductsEntity>,
     @Inject(forwardRef(() => ProductsService))
     private readonly productService: ProductsService,
   ) {}
@@ -37,15 +37,15 @@ export class OrdersService {
 
     const orderEntity = new OrderEntity();
     orderEntity.shippingAddress = shippingEntity;
-    orderEntity.user = currentUser;
+    orderEntity.client = currentUser;
 
     const orderTbl = await this.orderRepository.save(orderEntity);
 
     let opEntity: {
       order: OrderEntity;
       product: ProductEntity;
-      product_quantity: number;
-      product_unit_price: number;
+      productQuantity: number;
+      productUnitPrice: number;
     }[] = [];
 
     for (let i = 0; i < createOrderDto.orderedProducts.length; i++) {
@@ -53,22 +53,21 @@ export class OrdersService {
       const product = await this.productService.findOne(
         createOrderDto.orderedProducts[i].id,
       );
-      const product_quantity =
-        createOrderDto.orderedProducts[i].product_quantity;
-      const product_unit_price =
-        createOrderDto.orderedProducts[i].product_unit_price;
+      const productQuantity = createOrderDto.orderedProducts[i].productQuantity;
+      const productUnitPrice =
+        createOrderDto.orderedProducts[i].productUnitPrice;
       opEntity.push({
         order,
         product,
-        product_quantity,
-        product_unit_price,
+        productQuantity,
+        productUnitPrice,
       });
     }
 
     const op = await this.opRepository
       .createQueryBuilder()
       .insert()
-      .into(OrdersProductsEntity)
+      .into(OrderProductsEntity)
       .values(opEntity)
       .execute();
 
@@ -79,8 +78,8 @@ export class OrdersService {
     return await this.orderRepository.find({
       relations: {
         shippingAddress: true,
-        user: true,
-        products: { product: true },
+        client: true,
+        orderProducts: { product: true },
       },
     });
   }
@@ -90,8 +89,8 @@ export class OrdersService {
       where: { id },
       relations: {
         shippingAddress: true,
-        user: true,
-        products: { product: true },
+        client: true,
+        orderProducts: { product: true },
       },
     });
   }
@@ -162,10 +161,10 @@ export class OrdersService {
   }
 
   async stockUpdate(order: OrderEntity, status: string) {
-    for (const op of order.products) {
+    for (const op of order.orderProducts) {
       await this.productService.updateStock(
         op.product.id,
-        op.product_quantity,
+        op.productQuantity,
         status,
       );
     }

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Query,
   UseInterceptors,
+  Put,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -29,8 +30,8 @@ import { ProductsDto } from './dto/products.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
-  @Post()
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/create')
   async create(
     @Body() createProductDto: CreateProductDto,
     @CurrentUser() currentUser: UserEntity,
@@ -44,13 +45,18 @@ export class ProductsController {
     return await this.productsService.findAll(query);
   }
 
+  // @Get('all')
+  // async getAllProducts(@Query() query: any): Promise<ProductsDto> {
+  //   return await this.productsService.getAllProducts(query);
+  // }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.productsService.findOne(+id);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
-  @Patch(':id')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Put('/update/:id')
   async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
@@ -66,5 +72,19 @@ export class ProductsController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.productsService.remove(+id);
+  }
+
+  // favourite products
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Post('/update-favourite-products')
+  async updateFavouriteProducts(
+    @Body() productId: string,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    console.log({ productId });
+    return await this.productsService.updateFavouriteProducts(
+      +productId,
+      currentUser,
+    );
   }
 }

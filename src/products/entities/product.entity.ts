@@ -1,11 +1,15 @@
 import { CategoryEntity } from 'src/categories/entities/category.entity';
-import { OrdersProductsEntity } from 'src/orders/entities/orders-products.entity';
+import { Variant } from 'src/constants/defined-class';
+import { OrderProductsEntity } from 'src/orders/entities/order-products.entity';
 import { ReviewEntity } from 'src/reviews/entities/review.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { VariantEntity } from 'src/variants/entities/variant.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -19,35 +23,76 @@ export class ProductEntity {
   id: number;
 
   @Column()
-  title: string;
+  productName: string;
+
+  @Column({ unique: true })
+  productCode: string;
 
   @Column()
   description: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  price: number;
+  @Column()
+  materials: string;
 
   @Column()
-  stock: number;
+  mainColors: string;
 
-  @Column('simple-array')
+  @Column()
+  uses: string;
+
+  @Column({ nullable: true })
+  productionDate: Date;
+
+  @Column({ nullable: true })
+  expirationDate: Date;
+
+  @Column()
+  isHeavyGood: boolean;
+
+  @Column()
+  isMultipleClasses: boolean;
+
+  @Column({
+    type: 'decimal',
+    precision: 30,
+    scale: 0,
+    default: 0,
+    nullable: true,
+  })
+  price: number;
+
+  @Column({ nullable: true })
+  inventoryNumber: number;
+
+  @Column('simple-array', { nullable: true })
   images: string[];
 
+  @Column({ nullable: true })
+  discount: number;
+
   @CreateDateColumn()
-  createdAt: Timestamp;
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt: Timestamp;
+  updatedAt: Date;
 
   @ManyToOne(() => UserEntity, (user) => user.products)
   addedBy: UserEntity;
 
-  @ManyToOne(() => CategoryEntity, (cat) => cat.products)
-  category: CategoryEntity;
+  @ManyToMany(() => CategoryEntity, (cat) => cat.products)
+  @JoinTable({ name: 'category_product' })
+  category: CategoryEntity[];
 
   @OneToMany(() => ReviewEntity, (rev) => rev.product)
   reviews: ReviewEntity[];
 
-  @OneToMany(() => OrdersProductsEntity, (op) => op.product)
-  products: OrdersProductsEntity[];
+  @OneToMany(() => OrderProductsEntity, (op) => op.product)
+  products: OrderProductsEntity[];
+
+  @OneToMany(() => VariantEntity, (item) => item.product, { nullable: true })
+  variants: VariantEntity[];
+
+  @ManyToMany(() => UserEntity, (user) => user.favouriteProducts)
+  @JoinTable({ name: 'user_favourite_product' })
+  lovedUsers: UserEntity[];
 }

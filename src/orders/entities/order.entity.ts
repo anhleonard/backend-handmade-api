@@ -11,13 +11,22 @@ import {
 } from 'typeorm';
 import { OrderStatus } from '../enums/order-status.enum';
 import { UserEntity } from 'src/users/entities/user.entity';
-import { ShippingEntity } from './shipping.entity';
-import { OrdersProductsEntity } from './orders-products.entity';
+import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
+import { OrderProductsEntity } from './order-products.entity';
 
 @Entity({ name: 'orders' })
 export class OrderEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  provisionalAmount: number; // số tiền tạm tính
+
+  @Column()
+  discountAmount: number; // tổng số tiền được giảm
+
+  @Column()
+  totalPayment: number; //tiền phải trả
 
   @CreateDateColumn()
   orderAt: Timestamp;
@@ -38,9 +47,9 @@ export class OrderEntity {
   @JoinColumn()
   shippingAddress: ShippingEntity;
 
-  @OneToMany(() => OrdersProductsEntity, (op) => op.order, { cascade: true })
-  products: OrdersProductsEntity[];
+  @OneToMany(() => OrderProductsEntity, (op) => op.order, { cascade: true })
+  orderProducts: OrderProductsEntity[];
 
   @ManyToOne(() => UserEntity, (user) => user.orders)
-  user: UserEntity;
+  client: UserEntity;
 }
