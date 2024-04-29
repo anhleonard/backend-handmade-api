@@ -3,6 +3,7 @@ import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { ReviewEntity } from 'src/reviews/entities/review.entity';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { Genders, Roles } from 'src/utility/common/user-roles.enum';
 import {
   Column,
@@ -74,4 +75,10 @@ export class UserEntity {
 
   @ManyToMany(() => ProductEntity, (product) => product.lovedUsers)
   favouriteProducts: ProductEntity[];
+
+  @OneToOne(() => StoreEntity, (store) => store.owner)
+  store: StoreEntity;
+
+  @ManyToMany(() => StoreEntity, (store) => store.followers)
+  lovedStores: StoreEntity[];
 }

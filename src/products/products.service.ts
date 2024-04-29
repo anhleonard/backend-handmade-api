@@ -273,30 +273,64 @@ export class ProductsService {
   }
 
   // favourite products
-  async updateFavouriteProducts(productId: number, currentUser: UserEntity) {
-    let user = await this.userRepository.findOne({
-      where: {
-        id: currentUser.id,
-      },
-    });
+  async updateFavouriteProducts(
+    productId: number,
+    currentUser: UserEntity,
+  ): Promise<UserEntity> {
+    try {
+      let user = await this.userRepository.findOne({
+        where: {
+          id: currentUser.id,
+        },
+        relations: {
+          favouriteProducts: true,
+        },
+      });
 
-    if (user) {
-      let favouriteProducts = user.favouriteProducts;
+      if (!user) {
+        throw new NotFoundException('User not found.');
+      }
 
-      let product = await this.productRepository.findOne({
+      let items = user.favouriteProducts ?? [];
+
+      const product = await this.productRepository.findOne({
         where: {
           id: productId,
         },
       });
 
-      if (product) {
-        favouriteProducts.push(product);
-        return await this.userRepository.save(favouriteProducts);
-      } else {
+      if (!product) {
         throw new NotFoundException('Product not exist.');
       }
-    } else {
-      throw new NotFoundException('User not found.');
+
+      items.push(product);
+
+      user.favouriteProducts = items;
+
+      return await this.userRepository.save(user);
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async getFavouriteProducts(userId: number) {
+    try {
+      let user = await this.userRepository.findOne({
+        where: {
+          id: userId,
+        },
+        relations: {
+          favouriteProducts: true,
+        },
+      });
+
+      if (user) {
+        return user.favouriteProducts;
+      } else {
+        throw new NotFoundException('User not found.');
+      }
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
 }

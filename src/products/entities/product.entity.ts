@@ -2,6 +2,7 @@ import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { Variant } from 'src/constants/defined-class';
 import { OrderProductsEntity } from 'src/orders/entities/order-products.entity';
 import { ReviewEntity } from 'src/reviews/entities/review.entity';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import {
@@ -95,4 +96,7 @@ export class ProductEntity {
   @ManyToMany(() => UserEntity, (user) => user.favouriteProducts)
   @JoinTable({ name: 'user_favourite_product' })
   lovedUsers: UserEntity[];
+
+  @ManyToOne(() => StoreEntity, (store) => store.products)
+  store: StoreEntity;
 }

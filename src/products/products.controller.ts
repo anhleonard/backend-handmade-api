@@ -76,15 +76,20 @@ export class ProductsController {
 
   // favourite products
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
-  @Post('/update-favourite-products')
+  @Put('/update-favourite-products')
   async updateFavouriteProducts(
-    @Body() productId: string,
+    @Body('productId') productId: string,
     @CurrentUser() currentUser: UserEntity,
   ) {
-    console.log({ productId });
     return await this.productsService.updateFavouriteProducts(
       +productId,
       currentUser,
     );
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Post('/favourite-products')
+  async getFavouriteProducts(@Body('userId') userId: string) {
+    return await this.productsService.getFavouriteProducts(+userId);
   }
 }
