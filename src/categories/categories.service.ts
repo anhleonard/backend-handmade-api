@@ -29,7 +29,7 @@ export class CategoriesService {
   async findOne(id: number): Promise<CategoryEntity> {
     const category = await this.categoryRepository.findOne({
       where: { id: id },
-      relations: { addedBy: true },
+      relations: { addedBy: true, products: true },
       select: {
         addedBy: {
           id: true,

@@ -2,6 +2,7 @@ import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { Variant } from 'src/constants/defined-class';
 import { OrderProductsEntity } from 'src/orders/entities/order-products.entity';
 import { ReviewEntity } from 'src/reviews/entities/review.entity';
+import { CollectionEntity } from 'src/store_collections/entities/collection.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
@@ -99,4 +100,9 @@ export class ProductEntity {
 
   @ManyToOne(() => StoreEntity, (store) => store.products)
   store: StoreEntity;
+
+  @ManyToOne(() => CollectionEntity, (collection) => collection.products, {
+    onDelete: 'SET NULL',
+  })
+  collection: CollectionEntity;
 }

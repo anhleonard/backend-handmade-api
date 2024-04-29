@@ -21,6 +21,7 @@ import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entit
 import { VariantsService } from 'src/variants/variants.service';
 import { VariantItemsService } from 'src/variant_items/variant_items.service';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
 
 @Injectable()
 export class ProductsService {
@@ -29,6 +30,8 @@ export class ProductsService {
     private readonly productRepository: Repository<ProductEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(StoreEntity)
+    private readonly storeRepository: Repository<StoreEntity>,
     @InjectRepository(VariantEntity)
     private readonly variantRepository: Repository<VariantEntity>,
     @InjectRepository(VariantItemEntity)
@@ -52,12 +55,27 @@ export class ProductsService {
         }
       }
 
+      //find store of product
+      let store = await this.storeRepository.findOne({
+        where: {
+          owner: {
+            id: currentUser.id,
+          },
+        },
+      });
+
+      if (!store) {
+        throw new NotFoundException('Not found store of this seller');
+      }
+
       // tạo product
       let product = this.productRepository.create(createProductDto);
 
       product.category = categories;
 
       product.addedBy = currentUser;
+
+      product.store = store;
 
       const savedProduct = await this.productRepository.save(product);
 
@@ -207,6 +225,7 @@ export class ProductsService {
         variants: {
           options: true,
         },
+        collection: true,
       },
       select: {
         addedBy: {

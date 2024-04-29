@@ -11,6 +11,7 @@ import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { UsersModule } from 'src/users/users.module';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UsersModule } from 'src/users/users.module';
       VariantEntity,
       VariantItemEntity,
       UserEntity,
+      StoreEntity,
     ]),
     CategoriesModule,
     VariantsModule,
