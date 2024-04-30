@@ -80,24 +80,24 @@ export class ProductsService {
       const savedProduct = await this.productRepository.save(product);
 
       //variants
-      let sampleVariants = createProductDto.sampleVariants;
+      // let sampleVariants = createProductDto.sampleVariants;
 
-      for (const variant of sampleVariants) {
-        //tạo và save variants
-        let createdVariant = this.variantRepository.create({
-          variantName: variant.variantName,
-          product: savedProduct,
-        });
+      // for (const variant of sampleVariants) {
+      //   //tạo và save variants
+      //   let createdVariant = this.variantRepository.create({
+      //     variantName: variant.variantName,
+      //     product: savedProduct,
+      //   });
 
-        createdVariant = await this.variantRepository.save(createdVariant);
+      //   createdVariant = await this.variantRepository.save(createdVariant);
 
-        for (const variantItems of variant.options) {
-          //tạo và save item variants
-          let optionItem = this.variantItemRepository.create(variantItems);
-          optionItem.variants = createdVariant;
-          optionItem = await this.variantItemRepository.save(optionItem);
-        }
-      }
+      //   for (const variantItems of variant.options) {
+      //     //tạo và save item variants
+      //     let optionItem = this.variantItemRepository.create(variantItems);
+      //     optionItem.variants = createdVariant;
+      //     optionItem = await this.variantItemRepository.save(optionItem);
+      //   }
+      // }
 
       return savedProduct;
     } catch (error) {
@@ -244,14 +244,27 @@ export class ProductsService {
   }
 
   async update(
-    id: number,
+    productId: number,
     updateProductDto: Partial<UpdateProductDto>,
     currentUser: UserEntity,
   ): Promise<ProductEntity> {
-    const product = await this.findOne(id);
+    const product = await this.productRepository.findOne({
+      where: {
+        id: productId,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found to update!');
+    }
+
     Object.assign(product, updateProductDto);
     product.addedBy = currentUser;
-    if (updateProductDto.categoryId) {
+
+    if (
+      updateProductDto.categoryId &&
+      updateProductDto.categoryId.length !== 0
+    ) {
       const categories = [];
 
       for (const categoryId of updateProductDto.categoryId) {
@@ -262,6 +275,11 @@ export class ProductsService {
       }
 
       product.category = categories;
+    } else {
+      throw new HttpException(
+        'Category should be not empty!',
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     //dang o day

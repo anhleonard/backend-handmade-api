@@ -12,6 +12,7 @@ import { VariantItemsModule } from './variant_items/variant_items.module';
 import { ShippingsModule } from './shippings/shippings.module';
 import { StoreCollectionsModule } from './store_collections/store_collections.module';
 import { StoresModule } from './stores/stores.module';
+import { VariantCategoriesModule } from './variant_categories/variant_categories.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { StoresModule } from './stores/stores.module';
     ShippingsModule,
     StoreCollectionsModule,
     StoresModule,
+    VariantCategoriesModule,
   ],
   controllers: [],
   providers: [],

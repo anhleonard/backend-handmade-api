@@ -1,3 +1,4 @@
+import { VariantCategoryEntity } from 'src/variant_categories/entities/variant-category.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -7,17 +8,11 @@ export class VariantItemEntity {
   id: number;
 
   @Column()
-  optionName: string;
-
-  @Column()
-  variantPrice: number;
-
-  @Column()
-  inventoryNumber: number;
-
-  @Column()
-  image: string;
+  name: string;
 
   @ManyToOne(() => VariantEntity, (item) => item.options)
   variants: VariantEntity;
+
+  @ManyToOne(() => VariantCategoryEntity, (category) => category.variantItems)
+  variantCategory: VariantCategoryEntity;
 }

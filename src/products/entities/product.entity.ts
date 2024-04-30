@@ -5,6 +5,7 @@ import { ReviewEntity } from 'src/reviews/entities/review.entity';
 import { CollectionEntity } from 'src/store_collections/entities/collection.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { VariantCategoryEntity } from 'src/variant_categories/entities/variant-category.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import {
   Column,
@@ -105,4 +106,7 @@ export class ProductEntity {
     onDelete: 'SET NULL',
   })
   collection: CollectionEntity;
+
+  @ManyToMany(() => VariantCategoryEntity, (cate) => cate.products)
+  variantCategories: VariantCategoryEntity[];
 }

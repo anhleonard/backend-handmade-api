@@ -13,6 +13,7 @@ import { OrderStatus } from '../enums/order-status.enum';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { OrderProductsEntity } from './order-products.entity';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
 
 @Entity({ name: 'orders' })
 export class OrderEntity {
@@ -52,4 +53,7 @@ export class OrderEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.orders)
   client: UserEntity;
+
+  @ManyToOne(() => StoreEntity, (store) => store.orders)
+  store: StoreEntity;
 }

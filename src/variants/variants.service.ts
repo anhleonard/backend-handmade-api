@@ -16,14 +16,14 @@ export class VariantsService {
     private readonly variantRepository: Repository<VariantEntity>,
   ) {}
 
-  async create(variantDto: CreateVariantDto): Promise<VariantEntity> {
-    try {
-      let variant = this.variantRepository.create(variantDto);
-      variant = await this.variantRepository.save(variant);
-      return variant;
-    } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-    }
+  async create(variantDto: CreateVariantDto) {
+    // try {
+    //   let variant = this.variantRepository.create(variantDto);
+    //   variant = await this.variantRepository.save(variant);
+    //   return variant;
+    // } catch (error) {
+    //   throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    // }
   }
 
   async findOne(id: number) {

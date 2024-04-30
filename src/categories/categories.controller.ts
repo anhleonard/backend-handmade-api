@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Put,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -42,15 +43,17 @@ export class CategoriesController {
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
-  @Patch(':id')
+  @Put('/update/:id')
   async update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
-  ): Promise<CategoryEntity> {
+  ) {
     return await this.categoriesService.update(+id, updateCategoryDto);
   }
 
-  @Delete(':id')
+  //không delete category mà chỉ update
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  @Delete('/delate/:id')
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(+id);
   }

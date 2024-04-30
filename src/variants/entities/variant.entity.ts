@@ -14,7 +14,13 @@ export class VariantEntity {
   id: number;
 
   @Column()
-  variantName: string;
+  unitPrice: number;
+
+  @Column()
+  inventoryNumber: number;
+
+  @Column()
+  image: string;
 
   @OneToMany(() => VariantItemEntity, (item) => item.variants)
   options: VariantItemEntity[];

@@ -22,15 +22,25 @@ export class ReviewEntity {
   @Column()
   comment: string;
 
+  @Column({ default: false })
+  isReported: boolean;
+
+  @Column({ nullable: true })
+  reportedReason: string;
+
   @CreateDateColumn()
   createdAt: Timestamp;
 
   @UpdateDateColumn()
   updatedAt: Timestamp;
 
-  @ManyToOne((type) => UserEntity, (user) => user.reviews)
+  @ManyToOne((type) => UserEntity, (user) => user.reviews, {
+    onDelete: 'SET NULL',
+  })
   user: UserEntity;
 
-  @ManyToOne((type) => ProductEntity, (prod) => prod.reviews)
+  @ManyToOne((type) => ProductEntity, (prod) => prod.reviews, {
+    onDelete: 'SET NULL',
+  })
   product: ProductEntity;
 }

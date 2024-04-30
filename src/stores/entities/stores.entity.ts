@@ -1,3 +1,4 @@
+import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { CollectionEntity } from 'src/store_collections/entities/collection.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
@@ -70,4 +71,7 @@ export class StoreEntity {
   @ManyToMany(() => UserEntity, (user) => user.lovedStores)
   @JoinTable({ name: 'store_followers' })
   followers: UserEntity[];
+
+  @OneToMany(() => OrderEntity, (order) => order.store)
+  orders: OrderEntity[];
 }

@@ -56,6 +56,7 @@ export class ProductsController {
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  //bao gồm update category cho product
   @Put('/update/:id')
   async update(
     @Param('id') id: string,

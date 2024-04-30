@@ -109,6 +109,9 @@ export class StoresService {
       where: {
         id: storeId,
       },
+      relations: {
+        products: true,
+      },
     });
 
     if (!store) {
