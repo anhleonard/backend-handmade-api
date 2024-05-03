@@ -1,6 +1,6 @@
 import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { Variant } from 'src/constants/defined-class';
-import { OrderProductsEntity } from 'src/orders/entities/order-products.entity';
+import { OrderProductEntity } from 'src/order_products/entities/order-products.entity';
 import { ReviewEntity } from 'src/reviews/entities/review.entity';
 import { CollectionEntity } from 'src/store_collections/entities/collection.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
@@ -59,7 +59,6 @@ export class ProductEntity {
     type: 'decimal',
     precision: 30,
     scale: 0,
-    default: 0,
     nullable: true,
   })
   price: number;
@@ -89,8 +88,8 @@ export class ProductEntity {
   @OneToMany(() => ReviewEntity, (rev) => rev.product)
   reviews: ReviewEntity[];
 
-  @OneToMany(() => OrderProductsEntity, (op) => op.product)
-  products: OrderProductsEntity[];
+  @OneToMany(() => OrderProductEntity, (op) => op.product)
+  products: OrderProductEntity[];
 
   @OneToMany(() => VariantEntity, (item) => item.product, { nullable: true })
   variants: VariantEntity[];

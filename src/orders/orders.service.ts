@@ -13,65 +13,89 @@ import { OrderEntity } from './entities/order.entity';
 import { Repository } from 'typeorm';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { ProductsService } from 'src/products/products.service';
-import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { OrderStatus } from './enums/order-status.enum';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
-import { OrderProductsEntity } from './entities/order-products.entity';
+import { OrderProductEntity } from '../order_products/entities/order-products.entity';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
-    @InjectRepository(OrderProductsEntity)
-    private readonly opRepository: Repository<OrderProductsEntity>,
+    @InjectRepository(OrderProductEntity)
+    private readonly opRepository: Repository<OrderProductEntity>,
+    @InjectRepository(ShippingEntity)
+    private readonly shippingRepository: Repository<ShippingEntity>,
     @Inject(forwardRef(() => ProductsService))
     private readonly productService: ProductsService,
   ) {}
-  async create(
-    createOrderDto: CreateOrderDto,
-    currentUser: UserEntity,
-  ): Promise<OrderEntity> {
-    const shippingEntity = new ShippingEntity();
-    Object.assign(shippingEntity, createOrderDto.shippingAddress);
+  async create(createOrderDto: CreateOrderDto, currentUser: UserEntity) {
+    const shippingEntity = await this.shippingRepository.findOne({
+      where: {
+        id: createOrderDto.shippingAddressId,
+        user: {
+          id: currentUser.id,
+        },
+      },
+    });
 
-    const orderEntity = new OrderEntity();
-    orderEntity.shippingAddress = shippingEntity;
-    orderEntity.client = currentUser;
-
-    const orderTbl = await this.orderRepository.save(orderEntity);
-
-    let opEntity: {
-      order: OrderEntity;
-      product: ProductEntity;
-      productQuantity: number;
-      productUnitPrice: number;
-    }[] = [];
-
-    for (let i = 0; i < createOrderDto.orderedProducts.length; i++) {
-      const order = orderTbl;
-      const product = await this.productService.findOne(
-        createOrderDto.orderedProducts[i].id,
-      );
-      const productQuantity = createOrderDto.orderedProducts[i].productQuantity;
-      const productUnitPrice =
-        createOrderDto.orderedProducts[i].productUnitPrice;
-      opEntity.push({
-        order,
-        product,
-        productQuantity,
-        productUnitPrice,
-      });
+    if (!shippingEntity) {
+      throw new NotFoundException('shipping address not found.');
     }
 
-    const op = await this.opRepository
-      .createQueryBuilder()
-      .insert()
-      .into(OrderProductsEntity)
-      .values(opEntity)
-      .execute();
+    let orderProducts = [];
+    let provisionalAmount = 0;
+    let discountAmount = 0;
+    let totalPayment = 0;
 
-    return await this.findOne(orderTbl.id);
+    for (let id of createOrderDto.orderedProductIds) {
+      const orderProduct = await this.opRepository.findOne({
+        where: {
+          id,
+          isSelected: true,
+          client: {
+            id: currentUser.id,
+          },
+        },
+        relations: {
+          client: true,
+          product: {
+            store: true,
+          },
+        },
+      });
+
+      if (orderProduct) {
+        //tạm tính tiền
+        provisionalAmount +=
+          orderProduct.productUnitPrice * orderProduct.productQuantity;
+
+        orderProducts.push(orderProduct);
+      }
+    }
+
+    //tính tổng tiền sau giảm
+    totalPayment = provisionalAmount - discountAmount;
+
+    if (orderProducts.length === 0) {
+      throw new BadRequestException('No item can be sold.');
+    }
+
+    const orderEntity = new OrderEntity();
+
+    //update thông tin giá cả
+    orderEntity.totalAmountItem = orderProducts.length;
+    orderEntity.provisionalAmount = provisionalAmount;
+    orderEntity.discountAmount = discountAmount;
+    orderEntity.totalPayment = totalPayment;
+
+    //thông tin các relations
+    orderEntity.shippingAddress = shippingEntity;
+    orderEntity.client = currentUser;
+    orderEntity.orderProducts = orderProducts;
+    orderEntity.store = orderProducts[0]?.product?.store;
+
+    return await this.orderRepository.save(orderEntity);
   }
 
   async findAll(): Promise<OrderEntity[]> {
@@ -79,7 +103,11 @@ export class OrdersService {
       relations: {
         shippingAddress: true,
         client: true,
-        orderProducts: { product: true },
+        orderProducts: {
+          product: {
+            store: true,
+          },
+        },
       },
     });
   }
@@ -104,11 +132,26 @@ export class OrdersService {
 
   async update(
     id: number,
-    updateOrderStatusDto: UpdateOrderStatusDto,
+    updateOrderDto: UpdateOrderDto,
     currentUser: UserEntity,
   ) {
+    if (updateOrderDto.status && !updateOrderDto.isAccepted) {
+      throw new BadRequestException(`Order is not accepted by seller`);
+    }
+
+    if (!updateOrderDto.isAccepted) {
+      throw new BadRequestException(`Order has no update`);
+    }
+
     let order = await this.findOne(id);
     if (!order) throw new NotFoundException('Order not found');
+
+    if (
+      order.status === OrderStatus.WAITING_PAYMENT &&
+      updateOrderDto.status !== OrderStatus.PROCESSING
+    ) {
+      throw new BadRequestException(`Processing after waiting payment`);
+    }
 
     if (
       order.status === OrderStatus.DELIVERED ||
@@ -116,28 +159,33 @@ export class OrdersService {
     ) {
       throw new BadRequestException(`Order already ${order.status}`);
     }
+
     if (
       order.status === OrderStatus.PROCESSING &&
-      updateOrderStatusDto.status != OrderStatus.SHIPPED
+      updateOrderDto.status != OrderStatus.SHIPPED
     ) {
       throw new BadRequestException(`Delivery before shipped !!!`);
     }
+
     if (
-      updateOrderStatusDto.status === OrderStatus.SHIPPED &&
+      updateOrderDto.status === OrderStatus.SHIPPED &&
       order.status === OrderStatus.SHIPPED
     ) {
       return order;
     }
-    if (updateOrderStatusDto.status === OrderStatus.SHIPPED) {
+
+    if (updateOrderDto.status === OrderStatus.SHIPPED) {
       order.shippedAt = new Date();
     }
-    if (updateOrderStatusDto.status === OrderStatus.DELIVERED) {
+
+    if (updateOrderDto.status === OrderStatus.DELIVERED) {
       order.deliveredAt = new Date();
     }
-    order.status = updateOrderStatusDto.status;
+
+    order.status = updateOrderDto.status;
     order.updatedBy = currentUser;
     order = await this.orderRepository.save(order);
-    if (updateOrderStatusDto.status === OrderStatus.DELIVERED) {
+    if (updateOrderDto.status === OrderStatus.DELIVERED) {
       await this.stockUpdate(order, OrderStatus.DELIVERED);
     }
     return order;

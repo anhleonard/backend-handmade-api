@@ -6,8 +6,8 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
   Put,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,9 +17,11 @@ import { UserEntity } from './entities/user.entity';
 import { UserSignInDto } from './dto/user-signin.dto';
 import { CurrentUser } from 'src/utility/decorators/current-user.decorator';
 import { AuthenticationGuard } from 'src/utility/guards/authentication.guard';
-import { AuthorizeRoles } from 'src/utility/decorators/authorize-roles.decorator';
 import { Roles } from 'src/utility/common/user-roles.enum';
 import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { UseGuards } from '@nestjs/common/decorators/core/use-guards.decorator';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Controller('users')
 export class UsersController {
@@ -74,5 +76,18 @@ export class UsersController {
   @Get('me')
   getProfile(@CurrentUser() currentUser: UserEntity) {
     return currentUser;
+  }
+
+  @Post('/forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return await this.usersService.forgotPassword(forgotPasswordDto);
+  }
+
+  @Post('/reset-password')
+  resetPassword(
+    @Query('token') token: string,
+    @Body() resetPassword: ResetPasswordDto,
+  ) {
+    return this.usersService.resetPassword(token, resetPassword);
   }
 }

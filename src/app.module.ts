@@ -13,6 +13,9 @@ import { ShippingsModule } from './shippings/shippings.module';
 import { StoreCollectionsModule } from './store_collections/store_collections.module';
 import { StoresModule } from './stores/stores.module';
 import { VariantCategoriesModule } from './variant_categories/variant_categories.module';
+import { OrderProductsModule } from './order_products/order_products.module';
+import { JwtModule } from '@nestjs/jwt';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -28,6 +31,7 @@ import { VariantCategoriesModule } from './variant_categories/variant_categories
     StoreCollectionsModule,
     StoresModule,
     VariantCategoriesModule,
+    OrderProductsModule,
   ],
   controllers: [],
   providers: [],

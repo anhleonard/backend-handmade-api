@@ -20,6 +20,7 @@ export class VariantItemsService {
       where: { id: id },
       relations: {
         variants: true,
+        variantCategory: true,
       },
     });
     if (!variantItem) throw new NotFoundException('Variant item not found.');

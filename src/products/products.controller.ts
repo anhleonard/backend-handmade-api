@@ -12,7 +12,6 @@ import {
   Put,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { AuthenticationGuard } from 'src/utility/guards/authentication.guard';
 import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
@@ -25,6 +24,7 @@ import {
   SerializeInterceptor,
 } from 'src/utility/interceptors/serialize.interceptor';
 import { ProductsDto } from './dto/products.dto';
+import { CreateProductDto } from './dto/create-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -35,7 +35,7 @@ export class ProductsController {
   async create(
     @Body() createProductDto: CreateProductDto,
     @CurrentUser() currentUser: UserEntity,
-  ): Promise<ProductEntity> {
+  ) {
     return await this.productsService.create(createProductDto, currentUser);
   }
 
@@ -44,11 +44,6 @@ export class ProductsController {
   async findAll(@Query() query: any): Promise<ProductsDto> {
     return await this.productsService.findAll(query);
   }
-
-  // @Get('all')
-  // async getAllProducts(@Query() query: any): Promise<ProductsDto> {
-  //   return await this.productsService.getAllProducts(query);
-  // }
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
@@ -70,7 +65,8 @@ export class ProductsController {
     );
   }
 
-  @Delete(':id')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Delete('/delete/:id')
   async remove(@Param('id') id: string) {
     return await this.productsService.remove(+id);
   }

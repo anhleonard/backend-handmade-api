@@ -10,7 +10,10 @@ export class VariantItemEntity {
   @Column()
   name: string;
 
-  @ManyToOne(() => VariantEntity, (item) => item.options)
+  @ManyToOne(() => VariantEntity, (item) => item.variantItems, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   variants: VariantEntity;
 
   @ManyToOne(() => VariantCategoryEntity, (category) => category.variantItems)

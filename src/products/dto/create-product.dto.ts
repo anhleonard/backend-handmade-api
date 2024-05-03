@@ -11,8 +11,8 @@ import {
   Length,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
-import { Variant } from 'src/constants/defined-class';
 
 export class CreateProductDto {
   @IsNotEmpty({ message: 'productName can not be blank.' })
@@ -62,7 +62,7 @@ export class CreateProductDto {
   @IsBoolean()
   isMultipleClasses: boolean;
 
-  @IsOptional()
+  @ValidateIf((object, value) => !object.isMultipleClasses)
   @IsNumber(
     { maxDecimalPlaces: 0 },
     { message: 'price should be number & max decimal precission 2' },
@@ -70,18 +70,18 @@ export class CreateProductDto {
   @IsPositive({ message: 'price should be positive number' })
   price: number;
 
-  @IsOptional()
+  @ValidateIf((object, value) => !object.isMultipleClasses)
   @IsNumber({}, { message: 'inventoryNumber should be number' })
   @Min(1, { message: 'inventoryNumber should be more than 0.' })
   inventoryNumber: number;
 
-  @IsOptional()
+  @ValidateIf((object, value) => !object.isMultipleClasses)
   @IsArray({ message: 'images should be in array format.' })
   images: string[];
 
-  @IsOptional()
+  @ValidateIf((object, value) => object.isMultipleClasses)
   @IsArray({ message: 'variants should be in array format.' })
-  sampleVariants: Variant[];
+  sampleVariants: any;
 
   @IsOptional()
   @IsNumber({}, { message: 'variants should be in array format.' })

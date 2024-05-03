@@ -7,7 +7,6 @@ import {
   NotFoundException,
   forwardRef,
 } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from './entities/product.entity';
@@ -19,9 +18,8 @@ import { OrdersService } from 'src/orders/orders.service';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entity';
 import { VariantsService } from 'src/variants/variants.service';
-import { VariantItemsService } from 'src/variant_items/variant_items.service';
-import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
+import { CreateProductDto } from './dto/create-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -39,13 +37,16 @@ export class ProductsService {
     private readonly categoryService: CategoriesService,
     @Inject(forwardRef(() => OrdersService))
     private readonly orderService: OrdersService,
+    private readonly variantService: VariantsService,
   ) {}
 
-  async create(
-    createProductDto: CreateProductDto,
-    currentUser: UserEntity,
-  ): Promise<ProductEntity> {
+  async create(createProductDto: CreateProductDto, currentUser: UserEntity) {
     try {
+      // check nếu categories truyền lên rỗng
+      if (createProductDto.categoryId.length === 0) {
+        throw new BadRequestException('Category ids is not empty.');
+      }
+
       const categories = [];
 
       for (const categoryId of createProductDto.categoryId) {
@@ -77,29 +78,23 @@ export class ProductsService {
 
       product.store = store;
 
-      const savedProduct = await this.productRepository.save(product);
-
       //variants
-      // let sampleVariants = createProductDto.sampleVariants;
+      if (createProductDto.sampleVariants) {
+        let sampleVariants = createProductDto.sampleVariants;
 
-      // for (const variant of sampleVariants) {
-      //   //tạo và save variants
-      //   let createdVariant = this.variantRepository.create({
-      //     variantName: variant.variantName,
-      //     product: savedProduct,
-      //   });
+        let createdVariants = [];
 
-      //   createdVariant = await this.variantRepository.save(createdVariant);
+        for (const variant of sampleVariants) {
+          const item = await this.variantService.create(variant);
+          if (item) {
+            createdVariants.push(item);
+          }
+        }
 
-      //   for (const variantItems of variant.options) {
-      //     //tạo và save item variants
-      //     let optionItem = this.variantItemRepository.create(variantItems);
-      //     optionItem.variants = createdVariant;
-      //     optionItem = await this.variantItemRepository.save(optionItem);
-      //   }
-      // }
+        product.variants = createdVariants;
+      }
 
-      return savedProduct;
+      return await this.productRepository.save(product);
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
@@ -179,43 +174,6 @@ export class ProductsService {
     return { products, totalProducts, limit };
   }
 
-  // async getAllProducts(
-  //   query: any,
-  // ): Promise<{ products: any[]; totalProducts: any; limit: any }> {
-  //   let filteredTotalProducts: number;
-  //   let limit: number;
-
-  //   if (!query.limit) {
-  //     limit = 4;
-  //   } else {
-  //     limit = query.limit;
-  //   }
-
-  //   const queryBuilder = dataSource
-  //     .getRepository(ProductEntity)
-  //     .createQueryBuilder('product');
-
-  //   const sample = await queryBuilder.getRawMany();
-
-  //   const products = await this.productRepository.find({
-  //     relations: {
-  //       category: true,
-  //       reviews: true,
-  //       variants: {
-  //         options: true,
-  //       },
-  //     },
-  //   });
-
-  //   if (query.search) {
-  //     const search = query.search;
-  //   }
-
-  //   const totalProducts = products.length;
-
-  //   return { products, totalProducts, limit };
-  // }
-
   async findOne(id: number) {
     const product = await this.productRepository.findOne({
       where: { id: id },
@@ -223,7 +181,9 @@ export class ProductsService {
         addedBy: true,
         category: true,
         variants: {
-          options: true,
+          variantItems: {
+            variantCategory: true,
+          },
         },
         collection: true,
       },
@@ -289,8 +249,16 @@ export class ProductsService {
   }
 
   async remove(id: number) {
-    const product = await this.findOne(id);
-    console.log(product);
+    const product = await this.productRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found!');
+    }
+
     const order = await this.orderService.findOneByProductId(product.id);
     if (order) throw new BadRequestException('Products is in use.');
 

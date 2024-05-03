@@ -1,10 +1,12 @@
 import { CategoryEntity } from 'src/categories/entities/category.entity';
+import { OrderProductEntity } from 'src/order_products/entities/order-products.entity';
 import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { ReviewEntity } from 'src/reviews/entities/review.entity';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { Genders, Roles } from 'src/utility/common/user-roles.enum';
+import { VariantCategoryEntity } from 'src/variant_categories/entities/variant-category.entity';
 import {
   Column,
   CreateDateColumn,
@@ -81,4 +83,10 @@ export class UserEntity {
 
   @ManyToMany(() => StoreEntity, (store) => store.followers)
   lovedStores: StoreEntity[];
+
+  @OneToMany(() => VariantCategoryEntity, (cate) => cate.addedBy)
+  variantCategories: VariantCategoryEntity[];
+
+  @OneToMany(() => OrderProductEntity, (orderProduct) => orderProduct.client)
+  orderProducts: OrderProductEntity[];
 }

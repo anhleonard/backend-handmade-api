@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -12,12 +14,18 @@ import { UserSignUpDto } from './dto/user-signup.dto';
 import { hash, compare } from 'bcrypt';
 import { UserSignInDto } from './dto/user-signin.dto';
 import { sign } from 'jsonwebtoken';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    private mailService: MailerService,
+    private jwtService: JwtService,
   ) {}
 
   async signup(userSignUpDto: UserSignUpDto): Promise<UserEntity> {
@@ -81,5 +89,63 @@ export class UsersService {
       process.env.ACCESS_TOKEN_SECRET_KEY,
       { expiresIn: process.env.ACCESS_TOKEN_EXPIRE_TIME },
     );
+  }
+
+  /***************** Fotgot Password  */
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
+    const user = await this.usersRepository.findOne({
+      where: {
+        email: forgotPasswordDto.email,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found.');
+
+    const token = await this.accessToken(user);
+
+    return await this.sendResetMail(forgotPasswordDto.email, token);
+  }
+
+  async sendResetMail(toEmail: string, token: string) {
+    try {
+      const mail = await this.mailService.sendMail({
+        to: toEmail,
+        from: 'support@example.com',
+        subject: 'Reset Password',
+        html:
+          '<h1>Reset Password</h1> <h2>Welcome</h2><p>To reset your password, please click on this link</p><a href=http://localhost:3000/reset-password/' +
+          token +
+          '>Click this </a>',
+      });
+
+      if (!mail) {
+        throw new BadRequestException('An error occurred while sending mail');
+      }
+
+      return mail;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async resetPassword(token: string, resetPassword: ResetPasswordDto) {
+    const decodedToken = await this.jwtService.verifyAsync(token);
+    console.log(decodedToken);
+
+    const userId = decodedToken.userId;
+
+    const foundUser = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!foundUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const hashedPassword = await hash(resetPassword.password, 10);
+
+    foundUser.password = hashedPassword;
+
+    return await this.usersRepository.save(foundUser);
   }
 }

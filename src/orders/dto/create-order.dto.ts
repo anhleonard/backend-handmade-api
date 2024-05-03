@@ -1,14 +1,11 @@
-import { Type } from 'class-transformer';
-import { CreateShippingDto } from './create-shipping.dto';
-import { ValidateNested } from 'class-validator';
-import { OrderedProductsDto } from './ordered-products.dto';
+import { IsArray, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class CreateOrderDto {
-  @Type(() => CreateShippingDto)
-  @ValidateNested()
-  shippingAddress: CreateShippingDto;
+  @IsNotEmpty({ message: 'shippingAddressId is not empty.' })
+  @IsNumber()
+  shippingAddressId: number;
 
-  @Type(() => OrderedProductsDto)
-  @ValidateNested()
-  orderedProducts: OrderedProductsDto[];
+  @IsNotEmpty({ message: 'orderedProductIds is not empty.' })
+  @IsArray()
+  orderedProductIds: number[];
 }

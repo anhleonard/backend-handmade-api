@@ -1,4 +1,5 @@
 import { ProductEntity } from 'src/products/entities/product.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
 import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entity';
 import {
   Column,
@@ -25,4 +26,7 @@ export class VariantCategoryEntity {
   @ManyToMany(() => ProductEntity, (product) => product.variantCategories)
   @JoinTable({ name: 'variant_category_product' })
   products: ProductEntity[];
+
+  @ManyToOne(() => UserEntity, (user) => user.variantCategories)
+  addedBy: UserEntity;
 }

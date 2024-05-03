@@ -1,3 +1,4 @@
+import { OrderProductEntity } from 'src/order_products/entities/order-products.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entity';
 import {
@@ -22,9 +23,19 @@ export class VariantEntity {
   @Column()
   image: string;
 
-  @OneToMany(() => VariantItemEntity, (item) => item.variants)
-  options: VariantItemEntity[];
+  @OneToMany(() => VariantItemEntity, (item) => item.variants, {
+    onDelete: 'SET NULL',
+  })
+  variantItems: VariantItemEntity[];
 
-  @ManyToOne(() => ProductEntity, (product) => product.variants)
+  @ManyToOne(() => ProductEntity, (product) => product.variants, {
+    onDelete: 'SET NULL',
+  })
   product: ProductEntity;
+
+  // xem lại
+  @OneToMany(() => OrderProductEntity, (order) => order.variant, {
+    onDelete: 'SET NULL',
+  })
+  orderProducts: OrderProductEntity[];
 }

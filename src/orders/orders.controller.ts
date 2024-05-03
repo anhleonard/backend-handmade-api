@@ -24,12 +24,12 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @UseGuards(AuthenticationGuard)
-  @Post()
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Post('/create')
   async create(
     @Body() createOrderDto: CreateOrderDto,
     @CurrentUser() currentUser: UserEntity,
-  ): Promise<OrderEntity> {
+  ) {
     return await this.ordersService.create(createOrderDto, currentUser);
   }
 
@@ -43,18 +43,14 @@ export class OrdersController {
     return await this.ordersService.findOne(+id);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
-  @Put(':id')
+  @UseGuards(AuthenticationGuard)
+  @Put('/update/:id')
   async update(
     @Param('id') id: string,
-    @Body() updateOrderStatusDto: UpdateOrderStatusDto,
+    @Body() updateOrderDto: UpdateOrderDto,
     @CurrentUser() currentUser: UserEntity,
   ) {
-    return await this.ordersService.update(
-      +id,
-      updateOrderStatusDto,
-      currentUser,
-    );
+    return await this.ordersService.update(+id, updateOrderDto, currentUser);
   }
 
   @Put('cancel/:id')

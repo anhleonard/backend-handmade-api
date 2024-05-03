@@ -12,13 +12,16 @@ import {
 import { OrderStatus } from '../enums/order-status.enum';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
-import { OrderProductsEntity } from './order-products.entity';
+import { OrderProductEntity } from '../../order_products/entities/order-products.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 
 @Entity({ name: 'orders' })
 export class OrderEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  totalAmountItem: number; // tổng số sp đã chọn mua
 
   @Column()
   provisionalAmount: number; // số tiền tạm tính
@@ -32,7 +35,15 @@ export class OrderEntity {
   @CreateDateColumn()
   orderAt: Timestamp;
 
-  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PROCESSING })
+  @Column({ default: false })
+  isAccepted: boolean; // đã được duyệt bởi seller hay chưa
+
+  // chỉ xuất hiện khi isAccepted by seller là true
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.WAITING_PAYMENT,
+  })
   status: string;
 
   @Column({ nullable: true })
@@ -44,12 +55,17 @@ export class OrderEntity {
   @ManyToOne(() => UserEntity, (user) => user.ordersUpdateBy)
   updatedBy: UserEntity;
 
-  @OneToOne(() => ShippingEntity, (ship) => ship.order, { cascade: true })
+  @OneToOne(() => ShippingEntity, (ship) => ship.order, {
+    onDelete: 'SET NULL',
+  })
   @JoinColumn()
   shippingAddress: ShippingEntity;
 
-  @OneToMany(() => OrderProductsEntity, (op) => op.order, { cascade: true })
-  orderProducts: OrderProductsEntity[];
+  @OneToMany(() => OrderProductEntity, (op) => op.order, {
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
+  orderProducts: OrderProductEntity[];
 
   @ManyToOne(() => UserEntity, (user) => user.orders)
   client: UserEntity;
