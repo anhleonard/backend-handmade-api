@@ -55,10 +55,9 @@ export class OrderEntity {
   @ManyToOne(() => UserEntity, (user) => user.ordersUpdateBy)
   updatedBy: UserEntity;
 
-  @OneToOne(() => ShippingEntity, (ship) => ship.order, {
+  @ManyToOne(() => ShippingEntity, (ship) => ship.order, {
     onDelete: 'SET NULL',
   })
-  @JoinColumn()
   shippingAddress: ShippingEntity;
 
   @OneToMany(() => OrderProductEntity, (op) => op.order, {

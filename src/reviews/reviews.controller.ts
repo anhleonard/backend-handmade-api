@@ -30,7 +30,7 @@ export class ReviewsController {
   async create(
     @Body() createReviewDto: CreateReviewDto,
     @CurrentUser() currentUser: UserEntity,
-  ): Promise<ReviewEntity> {
+  ) {
     return await this.reviewsService.create(createReviewDto, currentUser);
   }
 

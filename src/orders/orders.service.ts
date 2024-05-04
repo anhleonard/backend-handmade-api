@@ -16,6 +16,7 @@ import { ProductsService } from 'src/products/products.service';
 import { OrderStatus } from './enums/order-status.enum';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { OrderProductEntity } from '../order_products/entities/order-products.entity';
+import { VariantEntity } from 'src/variants/entities/variant.entity';
 
 @Injectable()
 export class OrdersService {
@@ -26,6 +27,10 @@ export class OrdersService {
     private readonly opRepository: Repository<OrderProductEntity>,
     @InjectRepository(ShippingEntity)
     private readonly shippingRepository: Repository<ShippingEntity>,
+    @InjectRepository(ProductEntity)
+    private readonly productRepository: Repository<ProductEntity>,
+    @InjectRepository(VariantEntity)
+    private readonly variantRepository: Repository<VariantEntity>,
     @Inject(forwardRef(() => ProductsService))
     private readonly productService: ProductsService,
   ) {}
@@ -62,16 +67,60 @@ export class OrdersService {
           product: {
             store: true,
           },
+          variant: true,
         },
       });
 
-      if (orderProduct) {
-        //tạm tính tiền
-        provisionalAmount +=
-          orderProduct.productUnitPrice * orderProduct.productQuantity;
-
-        orderProducts.push(orderProduct);
+      if (!orderProduct) {
+        break;
       }
+
+      let updatedProduct = Object.assign({}, orderProduct.product);
+
+      //check xem còn đủ hàng không <in cart của client và in stock của seller>
+      if (
+        orderProduct?.variant &&
+        orderProduct.productQuantity > orderProduct?.variant.inventoryNumber
+      ) {
+        throw new BadRequestException('Not enough quantity to order.');
+      }
+
+      if (
+        !orderProduct?.variant &&
+        orderProduct.productQuantity > orderProduct?.product?.inventoryNumber
+      ) {
+        throw new BadRequestException('Not enough quantity to order.');
+      }
+
+      //update inventoryNumber trong product gốc
+      if (!orderProduct?.variant) {
+        // const updatedProduct = Object.assign({}, orderProduct.product);
+        updatedProduct.inventoryNumber =
+          orderProduct?.product?.inventoryNumber - orderProduct.productQuantity;
+      } else if (orderProduct?.variant) {
+        //update inventory trong vatiant
+        const updatedVariant = Object.assign({}, orderProduct?.variant);
+        updatedVariant.inventoryNumber =
+          orderProduct?.variant.inventoryNumber - orderProduct.productQuantity;
+
+        //update inventory trong product
+        updatedProduct.inventoryNumber =
+          orderProduct.product.inventoryNumber - orderProduct.productQuantity;
+
+        await this.variantRepository.save(updatedVariant);
+      }
+
+      //tạm tính tiền
+      provisionalAmount +=
+        orderProduct.productUnitPrice * orderProduct.productQuantity;
+
+      orderProducts.push(orderProduct);
+
+      //update sold number
+      updatedProduct.soldNumber =
+        orderProduct.product.soldNumber + orderProduct.productQuantity;
+
+      await this.productRepository.save(updatedProduct);
     }
 
     //tính tổng tiền sau giảm

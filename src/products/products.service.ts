@@ -20,6 +20,7 @@ import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entit
 import { VariantsService } from 'src/variants/variants.service';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { CreateProductDto } from './dto/create-product.dto';
+import { CategoryEntity } from 'src/categories/entities/category.entity';
 
 @Injectable()
 export class ProductsService {
@@ -82,6 +83,17 @@ export class ProductsService {
       if (createProductDto.sampleVariants) {
         let sampleVariants = createProductDto.sampleVariants;
 
+        //Tìm min price
+        const minUnitPrice = Math.min(
+          ...sampleVariants.map((variant) => variant.unitPrice),
+        );
+
+        // Tính tổng inventoryNumber
+        const totalInventoryNumber = sampleVariants.reduce(
+          (total, variant) => total + variant.inventoryNumber,
+          0,
+        );
+
         let createdVariants = [];
 
         for (const variant of sampleVariants) {
@@ -90,6 +102,10 @@ export class ProductsService {
             createdVariants.push(item);
           }
         }
+
+        product.price = minUnitPrice;
+        product.inventoryNumber = totalInventoryNumber;
+        product.images = sampleVariants[0].image;
 
         product.variants = createdVariants;
       }
@@ -172,6 +188,57 @@ export class ProductsService {
     const products = await queryBuilder.getRawMany();
 
     return { products, totalProducts, limit };
+  }
+
+  async filterProducts(query: any) {
+    const builder = this.productRepository.createQueryBuilder('products');
+
+    // builder.relation(CategoryEntity, 'categories');
+
+    if (query?.productName) {
+      const name = query.productName.toLowerCase();
+
+      builder.where(
+        'LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName',
+        {
+          productName: `%${name}%`,
+        },
+      );
+    }
+
+    const sort: any = query?.sort;
+
+    if (sort === 'BEST_RATING') {
+      builder
+        .innerJoinAndSelect('products.reviews', 'reviews')
+        .orderBy('reviews.ratings', 'DESC');
+    } else if (sort === 'PRICE_LOW_HIGH') {
+      builder.orderBy('CAST(products.price AS INT)', 'ASC');
+    } else if (sort === 'PRICE_HIGH_LOW') {
+      builder.orderBy('CAST(products.price AS INT)', 'DESC');
+    } else if (sort === 'NEWEST') {
+      builder.orderBy('products.createdAt', 'ASC');
+    }
+
+    //lọc discount
+    if (query?.discount) {
+      if (parseInt(query?.discount) === 1) {
+        builder.where('products.discount IS NOT NULL');
+      }
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    const perPage = 10;
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    return {
+      data: await builder.getMany(),
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
   }
 
   async findOne(id: number) {

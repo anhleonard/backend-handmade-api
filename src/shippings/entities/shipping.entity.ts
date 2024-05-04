@@ -3,6 +3,7 @@ import {
   Column,
   Entity,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -41,7 +42,7 @@ export class ShippingEntity {
   @Column({ nullable: true })
   companyName: string; // nơi làm việc
 
-  @OneToOne(() => OrderEntity, (order) => order.shippingAddress)
+  @OneToMany(() => OrderEntity, (order) => order.shippingAddress)
   order: OrderEntity;
 
   @ManyToOne(() => UserEntity, (user) => user.shippings)

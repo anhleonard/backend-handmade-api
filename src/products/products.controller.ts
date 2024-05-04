@@ -10,6 +10,7 @@ import {
   Query,
   UseInterceptors,
   Put,
+  Req,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -43,6 +44,11 @@ export class ProductsController {
   @Get()
   async findAll(@Query() query: any): Promise<ProductsDto> {
     return await this.productsService.findAll(query);
+  }
+
+  @Get('/filter')
+  async filterProducts(@Query() query: any) {
+    return await this.productsService.filterProducts(query);
   }
 
   @Get(':id')

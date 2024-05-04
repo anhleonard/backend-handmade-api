@@ -55,6 +55,9 @@ export class ProductEntity {
   @Column()
   isMultipleClasses: boolean;
 
+  @Column({ nullable: true })
+  inventoryNumber: number;
+
   @Column({
     type: 'decimal',
     precision: 30,
@@ -63,8 +66,11 @@ export class ProductEntity {
   })
   price: number;
 
-  @Column({ nullable: true })
-  inventoryNumber: number;
+  @Column('decimal', { default: 0 })
+  averageRating: number;
+
+  @Column({ default: 0 })
+  soldNumber: number;
 
   @Column('simple-array', { nullable: true })
   images: string[];

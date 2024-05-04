@@ -23,10 +23,7 @@ export class ReviewsService {
     private readonly productRepository: Repository<ProductEntity>,
     private readonly productService: ProductsService,
   ) {}
-  async create(
-    createReviewDto: CreateReviewDto,
-    currentUser: UserEntity,
-  ): Promise<ReviewEntity> {
+  async create(createReviewDto: CreateReviewDto, currentUser: UserEntity) {
     const product = await this.productRepository.findOne({
       where: {
         id: createReviewDto.productId,
@@ -50,7 +47,32 @@ export class ReviewsService {
       (review.comment = createReviewDto.comment),
         (review.ratings = createReviewDto.ratings);
     }
-    return await this.reviewRepository.save(review);
+
+    const createdReview = await this.reviewRepository.save(review);
+
+    const reviews = await this.reviewRepository.find({
+      where: {
+        product: {
+          id: createReviewDto.productId,
+        },
+      },
+      relations: {
+        product: true,
+      },
+    });
+
+    const totalRatings = reviews.reduce(
+      (acc, review) => acc + review.ratings,
+      0,
+    );
+
+    const averageRating = totalRatings / reviews.length;
+
+    product.averageRating = averageRating;
+
+    await this.productRepository.save(product);
+
+    return createdReview;
   }
 
   findAll() {
