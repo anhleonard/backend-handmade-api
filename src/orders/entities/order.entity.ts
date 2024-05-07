@@ -35,8 +35,17 @@ export class OrderEntity {
   @CreateDateColumn()
   orderAt: Timestamp;
 
+  @CreateDateColumn()
+  updatedAt: Date; //time update order
+
   @Column({ default: false })
   isAccepted: boolean; // đã được duyệt bởi seller hay chưa
+
+  @Column({ default: false })
+  isCanceled: boolean; // đã được hủy hay chưa
+
+  @Column({ nullable: true })
+  canceledReason: string; // lý do hủy
 
   // chỉ xuất hiện khi isAccepted by seller là true
   @Column({

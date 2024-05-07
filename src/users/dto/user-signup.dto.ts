@@ -4,13 +4,27 @@ import {
   IsEnum,
   IsNotEmpty,
   IsString,
+  IsStrongPassword,
   Matches,
   MinLength,
 } from 'class-validator';
-import { UserSignInDto } from './user-signin.dto';
 import { Genders, Roles } from 'src/utility/common/user-roles.enum';
 
-export class UserSignUpDto extends UserSignInDto {
+export class UserSignUpDto {
+  @IsNotEmpty({ message: 'Email can not be empty.' })
+  @IsEmail({}, { message: 'Pleadse provide a valid email.' })
+  email: string;
+
+  @IsNotEmpty({ message: 'Password can not be empty.' })
+  @IsStrongPassword({
+    minLength: 8,
+    minLowercase: 1,
+    minNumbers: 1,
+    minSymbols: 1,
+    minUppercase: 1,
+  })
+  password: string;
+
   @IsNotEmpty({ message: 'Name can not be null' })
   @IsString({ message: 'Name should be string' })
   name: string;

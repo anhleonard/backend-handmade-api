@@ -22,6 +22,7 @@ import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { UseGuards } from '@nestjs/common/decorators/core/use-guards.decorator';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
 export class UsersController {
@@ -89,5 +90,17 @@ export class UsersController {
     @Body() resetPassword: ResetPasswordDto,
   ) {
     return this.usersService.resetPassword(token, resetPassword);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Post('/change-password')
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.usersService.changePassword(
+      currentUser,
+      changePasswordDto,
+    );
   }
 }

@@ -19,6 +19,7 @@ import { OrderEntity } from './entities/order.entity';
 import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 import { Roles } from 'src/utility/common/user-roles.enum';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { CancelOrderDto } from './dto/cancel-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -43,7 +44,7 @@ export class OrdersController {
     return await this.ordersService.findOne(+id);
   }
 
-  @UseGuards(AuthenticationGuard)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Put('/update/:id')
   async update(
     @Param('id') id: string,
@@ -54,12 +55,13 @@ export class OrdersController {
   }
 
   @Put('cancel/:id')
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  @UseGuards(AuthenticationGuard)
   async cancelled(
     @Param('id') id: string,
+    @Body() cancelOrderDto: CancelOrderDto,
     @CurrentUser() currentUser: UserEntity,
   ) {
-    return await this.ordersService.cancelled(+id, currentUser);
+    return await this.ordersService.cancelled(+id, cancelOrderDto, currentUser);
   }
 
   @Delete(':id')

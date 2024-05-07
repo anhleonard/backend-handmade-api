@@ -18,6 +18,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtService } from '@nestjs/jwt';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class UsersService {
@@ -49,7 +50,7 @@ export class UsersService {
       userSignInDto.password,
       userExists.password,
     );
-    if (!matchPassword) throw new BadRequestException('Wrong password.');
+    if (!matchPassword) throw new BadRequestException('Wrong login password.');
     delete userExists.password;
     return userExists;
   }
@@ -135,7 +136,14 @@ export class UsersService {
     const userId = decodedToken.userId;
 
     const foundUser = await this.usersRepository.findOne({
-      where: { id: userId },
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+      },
     });
 
     if (!foundUser) {
@@ -146,6 +154,41 @@ export class UsersService {
 
     foundUser.password = hashedPassword;
 
-    return await this.usersRepository.save(foundUser);
+    const updatedUser = await this.usersRepository.save(foundUser);
+    delete updatedUser.password;
+    return updatedUser;
+  }
+
+  async changePassword(
+    currentUser: UserEntity,
+    changePasswordDto: ChangePasswordDto,
+  ) {
+    const foundUser = await this.usersRepository.findOne({
+      where: {
+        id: currentUser.id,
+      },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+      },
+    });
+
+    if (!foundUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const matchPassword = await compare(
+      changePasswordDto.oldPassword,
+      foundUser.password,
+    );
+
+    if (!matchPassword) throw new BadRequestException('Wrong old password.');
+
+    currentUser.password = await hash(changePasswordDto.newPassword, 10);
+
+    const updatedUser = await this.usersRepository.save(currentUser);
+    delete updatedUser.password;
+    return updatedUser;
   }
 }

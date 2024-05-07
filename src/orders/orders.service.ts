@@ -17,6 +17,7 @@ import { OrderStatus } from './enums/order-status.enum';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { OrderProductEntity } from '../order_products/entities/order-products.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
+import { CancelOrderDto } from './dto/cancel-order.dto';
 
 @Injectable()
 export class OrdersService {
@@ -116,9 +117,9 @@ export class OrdersService {
 
       orderProducts.push(orderProduct);
 
-      //update sold number
-      updatedProduct.soldNumber =
-        orderProduct.product.soldNumber + orderProduct.productQuantity;
+      //sold number chỉ update khi mà order về trạng thái success
+      // updatedProduct.soldNumber =
+      //   orderProduct.product.soldNumber + orderProduct.productQuantity;
 
       await this.productRepository.save(updatedProduct);
     }
@@ -167,7 +168,7 @@ export class OrdersService {
       relations: {
         shippingAddress: true,
         client: true,
-        orderProducts: { product: true },
+        orderProducts: { variant: true, product: true },
       },
     });
   }
@@ -184,12 +185,8 @@ export class OrdersService {
     updateOrderDto: UpdateOrderDto,
     currentUser: UserEntity,
   ) {
-    if (updateOrderDto.status && !updateOrderDto.isAccepted) {
-      throw new BadRequestException(`Order is not accepted by seller`);
-    }
-
-    if (!updateOrderDto.isAccepted) {
-      throw new BadRequestException(`Order has no update`);
+    if (updateOrderDto.status === OrderStatus.CENCELLED) {
+      throw new BadRequestException(`Go to cancel route`);
     }
 
     let order = await this.findOne(id);
@@ -204,6 +201,7 @@ export class OrdersService {
 
     if (
       order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.SHIPPED ||
       order.status === OrderStatus.CENCELLED
     ) {
       throw new BadRequestException(`Order already ${order.status}`);
@@ -211,9 +209,9 @@ export class OrdersService {
 
     if (
       order.status === OrderStatus.PROCESSING &&
-      updateOrderDto.status != OrderStatus.SHIPPED
+      updateOrderDto.status != OrderStatus.DELIVERED
     ) {
-      throw new BadRequestException(`Delivery before shipped !!!`);
+      throw new BadRequestException(`Delivery after processing !!!`);
     }
 
     if (
@@ -233,19 +231,67 @@ export class OrdersService {
 
     order.status = updateOrderDto.status;
     order.updatedBy = currentUser;
+    order.updatedAt = new Date();
     order = await this.orderRepository.save(order);
-    if (updateOrderDto.status === OrderStatus.DELIVERED) {
-      await this.stockUpdate(order, OrderStatus.DELIVERED);
+
+    //update sold number nếu đơn hàng đã giao
+    if (updateOrderDto.status === OrderStatus.SHIPPED) {
+      for (let op of order.orderProducts) {
+        await this.updateSoldNumber(op);
+      }
     }
+
     return order;
   }
 
-  async cancelled(id: number, currentUser: UserEntity) {
-    let order = await this.findOne(id);
+  async updateSoldNumber(op: OrderProductEntity) {
+    const product = await this.productRepository.findOne({
+      where: {
+        id: op.product.id,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    product.soldNumber = product.soldNumber + op.productQuantity;
+    await this.productRepository.save(product);
+  }
+
+  async cancelled(
+    id: number,
+    cancelOrderDto: CancelOrderDto,
+    currentUser: UserEntity,
+  ) {
+    let order = await this.orderRepository.findOne({
+      where: {
+        id,
+      },
+      relations: {
+        orderProducts: {
+          variant: true,
+          product: {
+            variants: true,
+          },
+        },
+      },
+    });
+
     if (!order) throw new NotFoundException('Order Not Found.');
+
+    if (
+      order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.SHIPPED
+    ) {
+      throw new BadRequestException('Not permission to cancel order.');
+    }
 
     if (order.status === OrderStatus.CENCELLED) return order;
 
+    order.isCanceled = true;
+    order.canceledReason = cancelOrderDto.canceledReason;
+    order.updatedAt = new Date();
     order.status = OrderStatus.CENCELLED;
     order.updatedBy = currentUser;
     order = await this.orderRepository.save(order);
@@ -253,17 +299,64 @@ export class OrdersService {
     return order;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} order`;
-  }
-
   async stockUpdate(order: OrderEntity, status: string) {
     for (const op of order.orderProducts) {
-      await this.productService.updateStock(
-        op.product.id,
-        op.productQuantity,
-        status,
-      );
+      if (!op.variant) {
+        await this.updateStockNotVariant(op);
+      } else {
+        await this.updateStockHaveVariant(op);
+      }
     }
+  }
+
+  async updateStockNotVariant(op: OrderProductEntity) {
+    const product = await this.productRepository.findOne({
+      where: {
+        id: op.product.id,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    product.inventoryNumber = product.inventoryNumber + op.productQuantity;
+
+    return await this.productRepository.save(product);
+  }
+
+  async updateStockHaveVariant(op: OrderProductEntity) {
+    const product = await this.productRepository.findOne({
+      where: {
+        id: op.product.id,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    //update stock in product
+    product.inventoryNumber = product.inventoryNumber + op.productQuantity;
+
+    //update stock in variant
+    const variant = await this.variantRepository.findOne({
+      where: {
+        id: op.variant.id,
+      },
+    });
+
+    if (!variant) {
+      throw new NotFoundException('Variant not found.');
+    }
+
+    variant.inventoryNumber = variant.inventoryNumber + op.productQuantity;
+
+    await this.variantRepository.save(variant);
+    return await this.productRepository.save(product);
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} order`;
   }
 }
