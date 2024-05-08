@@ -200,18 +200,17 @@ export class OrdersService {
     }
 
     if (
-      order.status === OrderStatus.DELIVERED ||
-      order.status === OrderStatus.SHIPPED ||
-      order.status === OrderStatus.CENCELLED
-    ) {
-      throw new BadRequestException(`Order already ${order.status}`);
-    }
-
-    if (
       order.status === OrderStatus.PROCESSING &&
       updateOrderDto.status != OrderStatus.DELIVERED
     ) {
       throw new BadRequestException(`Delivery after processing !!!`);
+    }
+
+    if (
+      order.status === OrderStatus.DELIVERED &&
+      updateOrderDto.status !== OrderStatus.SHIPPED
+    ) {
+      throw new BadRequestException(`Shipping after delivery!`);
     }
 
     if (
@@ -227,6 +226,10 @@ export class OrdersService {
 
     if (updateOrderDto.status === OrderStatus.DELIVERED) {
       order.deliveredAt = new Date();
+    }
+
+    if (updateOrderDto.status === OrderStatus.PROCESSING) {
+      order.isAccepted = true;
     }
 
     order.status = updateOrderDto.status;
@@ -277,6 +280,14 @@ export class OrdersService {
         },
       },
     });
+
+    if (
+      order.status === OrderStatus.DELIVERED ||
+      order.status === OrderStatus.SHIPPED ||
+      order.status === OrderStatus.CENCELLED
+    ) {
+      throw new BadRequestException(`Not permission to cancel order.`);
+    }
 
     if (!order) throw new NotFoundException('Order Not Found.');
 

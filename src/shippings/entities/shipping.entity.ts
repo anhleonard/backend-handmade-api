@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { ReceivingPlaces } from '../enum/shippings.enum';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { AuctionEntity } from 'src/auctions/entities/auction.entity';
 
 @Entity({ name: 'shippings' })
 export class ShippingEntity {
@@ -47,4 +48,7 @@ export class ShippingEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.shippings)
   user: UserEntity;
+
+  @OneToMany(() => AuctionEntity, (user) => user.shipping)
+  auctions: AuctionEntity[];
 }

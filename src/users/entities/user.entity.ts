@@ -1,3 +1,5 @@
+import { AuctionEntity } from 'src/auctions/entities/auction.entity';
+import { ProgressEntity } from 'src/auctions/entities/progress.entity';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { OrderProductEntity } from 'src/order_products/entities/order-products.entity';
 import { OrderEntity } from 'src/orders/entities/order.entity';
@@ -89,4 +91,10 @@ export class UserEntity {
 
   @OneToMany(() => OrderProductEntity, (orderProduct) => orderProduct.client)
   orderProducts: OrderProductEntity[];
+
+  @OneToMany(() => AuctionEntity, (user) => user.owner)
+  auctions: AuctionEntity[];
+
+  @OneToMany(() => ProgressEntity, (pro) => pro.user)
+  progresses: ProgressEntity[];
 }

@@ -1,3 +1,4 @@
+import { BidderEntity } from 'src/auctions/entities/bidder.entity';
 import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { CollectionEntity } from 'src/store_collections/entities/collection.entity';
@@ -74,4 +75,7 @@ export class StoreEntity {
 
   @OneToMany(() => OrderEntity, (order) => order.store)
   orders: OrderEntity[];
+
+  @OneToMany(() => BidderEntity, (bidder) => bidder.store)
+  bidders: BidderEntity[];
 }

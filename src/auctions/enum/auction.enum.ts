@@ -1,0 +1,7 @@
+export enum AuctionStatus {
+  AUCTIONING = 'AUCTIONING',
+  PROGRESS = 'PROGRESS',
+  DELIVERY = 'DELIVERY',
+  COMPLETED = 'COMPLETED',
+  CANCELED = 'CANCELED',
+}

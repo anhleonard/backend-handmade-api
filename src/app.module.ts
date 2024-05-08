@@ -16,6 +16,7 @@ import { VariantCategoriesModule } from './variant_categories/variant_categories
 import { OrderProductsModule } from './order_products/order_products.module';
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { AuctionsModule } from './auctions/auctions.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
     StoresModule,
     VariantCategoriesModule,
     OrderProductsModule,
+    AuctionsModule,
   ],
   controllers: [],
   providers: [],
