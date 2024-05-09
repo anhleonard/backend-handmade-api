@@ -24,7 +24,7 @@ export class CreateShippingDto {
   @IsString()
   district: string;
 
-  @IsNotEmpty({ message: 'district should not be empty' })
+  @IsNotEmpty({ message: 'ward should not be empty' })
   @IsString()
   ward: string;
 
@@ -32,14 +32,15 @@ export class CreateShippingDto {
   @IsString()
   detailAddress: string;
 
-  @IsNotEmpty({ message: 'detailAddress should not be empty' })
+  @IsNotEmpty({ message: 'isDefaultAddress should not be empty' })
   @IsBoolean()
   isDefaultAddress: boolean;
 
-  @IsNotEmpty({ message: 'detailAddress should not be empty' })
+  @IsNotEmpty({ message: 'receivePlace should not be empty' })
   @IsEnum(ReceivingPlaces)
   receivePlace: ReceivingPlaces; //nơi nhận hàng // enum home or comany
 
   @IsOptional()
+  @IsString()
   companyName: string; // nơi làm việc
 }

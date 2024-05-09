@@ -31,7 +31,7 @@ export class ShippingsController {
     return await this.shippingsService.create(createShippingDto, currentUser);
   }
 
-  @Get('')
+  @Post('')
   async findAllByUser(
     @Body('userId') userId: number,
   ): Promise<ShippingEntity[]> {

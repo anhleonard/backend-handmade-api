@@ -1,11 +1,13 @@
 import { OrderEntity } from 'src/orders/entities/order.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  Timestamp,
 } from 'typeorm';
 import { ReceivingPlaces } from '../enum/shippings.enum';
 import { UserEntity } from 'src/users/entities/user.entity';
@@ -42,6 +44,12 @@ export class ShippingEntity {
 
   @Column({ nullable: true })
   companyName: string; // nơi làm việc
+
+  @CreateDateColumn()
+  createdAt: Timestamp;
+
+  @CreateDateColumn()
+  updatedAt: Timestamp;
 
   @OneToMany(() => OrderEntity, (order) => order.shippingAddress)
   order: OrderEntity;

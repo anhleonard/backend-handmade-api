@@ -60,7 +60,7 @@ export class ShippingsService {
 
       Object.assign(shippings, updateShippingDto);
 
-      Object.assign(shippings, { user: currentUser });
+      Object.assign(shippings, { user: currentUser, updatedAt: new Date() });
 
       return await this.shippingRepository.save(shippings);
     } else {
