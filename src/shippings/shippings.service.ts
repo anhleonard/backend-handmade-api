@@ -38,6 +38,18 @@ export class ShippingsService {
     }
   }
 
+  async findOne(id: number): Promise<ShippingEntity> {
+    let shipping = await this.shippingRepository.findOne({
+      where: { id },
+    });
+
+    if (!shipping) {
+      throw new NotFoundException('Shipping not found');
+    }
+
+    return shipping;
+  }
+
   async update(
     id: number,
     updateShippingDto: UpdateShippingDto,

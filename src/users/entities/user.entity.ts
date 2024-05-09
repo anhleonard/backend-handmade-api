@@ -47,10 +47,10 @@ export class UserEntity {
   @Column()
   phoneNumber: string;
 
-  @Column({ type: 'enum', enum: Genders, array: false })
+  @Column({ type: 'enum', enum: Genders, array: false, nullable: true })
   gender: Genders;
 
-  @Column()
+  @Column({ nullable: true })
   dateOfBirth: Date;
 
   @CreateDateColumn()

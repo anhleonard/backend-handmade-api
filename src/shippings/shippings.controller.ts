@@ -38,6 +38,12 @@ export class ShippingsController {
     return await this.shippingsService.findAllByUser(+userId);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER, Roles.ADMIN]))
+  @Get('/:id')
+  async findOne(@Param('id') id: number): Promise<ShippingEntity> {
+    return await this.shippingsService.findOne(+id);
+  }
+
   @Put('/update/:id')
   async update(
     @Param('id') id: number,
