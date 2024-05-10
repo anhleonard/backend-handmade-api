@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { VariantCategoriesService } from './variant_categories.service';
 import { Roles } from 'src/utility/common/user-roles.enum';
 import { AuthenticationGuard } from 'src/utility/guards/authentication.guard';
@@ -27,8 +35,23 @@ export class VariantCategoriesController {
 
   // lấy ra 1 single variant category
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/seller-variant-categories')
+  async getListVariantCategories(@CurrentUser() currentUser: UserEntity) {
+    return await this.variantCategoriesService.getListVariantCategories(
+      currentUser,
+    );
+  }
+
+  // lấy ra 1 single variant category
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Get('/:id')
   async getSingleVariantCategory(@Param('id') id: string) {
     return await this.variantCategoriesService.getSingleVariantCategory(+id);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Delete('/delete/:id')
+  async deleteVariantCategory(@Param('id') id: string) {
+    return await this.variantCategoriesService.deleteVariantCategory(+id);
   }
 }

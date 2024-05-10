@@ -23,7 +23,13 @@ export class CategoriesService {
   }
 
   async findAll(): Promise<CategoryEntity[]> {
-    return await this.categoryRepository.find();
+    return await this.categoryRepository.find({
+      select: {
+        id: true,
+        title: true,
+        description: true,
+      },
+    });
   }
 
   async findOne(id: number): Promise<CategoryEntity> {

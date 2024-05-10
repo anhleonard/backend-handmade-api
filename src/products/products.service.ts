@@ -405,4 +405,18 @@ export class ProductsService {
       throw new HttpException(e.message, HttpStatus.BAD_REQUEST);
     }
   }
+
+  async getProductImages(id: number) {
+    const product = await this.productRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    return product;
+  }
 }

@@ -20,13 +20,21 @@ export class VariantCategoryEntity {
   @Column()
   variantName: string;
 
-  @OneToMany(() => VariantItemEntity, (item) => item.variantCategory)
+  @OneToMany(() => VariantItemEntity, (item) => item.variantCategory, {
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
   variantItems: VariantItemEntity[];
 
-  @ManyToMany(() => ProductEntity, (product) => product.variantCategories)
+  @ManyToMany(() => ProductEntity, (product) => product.variantCategories, {
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
   @JoinTable({ name: 'variant_category_product' })
   products: ProductEntity[];
 
-  @ManyToOne(() => UserEntity, (user) => user.variantCategories)
+  @ManyToOne(() => UserEntity, (user) => user.variantCategories, {
+    onDelete: 'SET NULL',
+  })
   addedBy: UserEntity;
 }

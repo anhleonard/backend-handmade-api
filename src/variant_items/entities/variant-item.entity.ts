@@ -16,6 +16,8 @@ export class VariantItemEntity {
   })
   variants: VariantEntity;
 
-  @ManyToOne(() => VariantCategoryEntity, (category) => category.variantItems)
+  @ManyToOne(() => VariantCategoryEntity, (category) => category.variantItems, {
+    onDelete: 'SET NULL',
+  })
   variantCategory: VariantCategoryEntity;
 }

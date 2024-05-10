@@ -11,6 +11,8 @@ import {
   UseInterceptors,
   Put,
   Req,
+  UploadedFile,
+  UploadedFiles,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -26,6 +28,8 @@ import {
 } from 'src/utility/interceptors/serialize.interceptor';
 import { ProductsDto } from './dto/products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { storageConfig } from 'helpers/config';
 
 @Controller('products')
 export class ProductsController {
@@ -94,5 +98,39 @@ export class ProductsController {
   @Post('/favourite-products')
   async getFavouriteProducts(@Body('userId') userId: string) {
     return await this.productsService.getFavouriteProducts(+userId);
+  }
+
+  @Post('/upload-image')
+  @UseInterceptors(
+    FileInterceptor('image', { storage: storageConfig('image') }),
+  )
+  async uploadImage(
+    @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return file.destination + '/' + file.filename;
+  }
+
+  @Post('/uploads')
+  @UseInterceptors(
+    FilesInterceptor('files', null, { storage: storageConfig('image') }),
+  )
+  async uploadImages(
+    @Req() req: Request,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    let customFiles = [];
+    for (let file of files) {
+      if (file) {
+        customFiles.push(file.destination + '/' + file.filename);
+      }
+    }
+
+    return customFiles;
+  }
+
+  @Get('/product-images')
+  async getProductImages(@Param('productId') productId: string) {
+    return await this.productsService.getProductImages(+productId);
   }
 }
