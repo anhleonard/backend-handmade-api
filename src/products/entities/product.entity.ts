@@ -8,6 +8,7 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { VariantCategoryEntity } from 'src/variant_categories/entities/variant-category.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import {
+  BeforeInsert,
   Column,
   CreateDateColumn,
   Entity,
@@ -19,6 +20,8 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from 'typeorm';
+import { ProductStatus } from '../enum/product.enum';
+import moment from 'moment';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -83,6 +86,20 @@ export class ProductEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ nullable: true })
+  expirationAt: Date; // admin hết hạn duyệt lúc ...
+
+  @BeforeInsert()
+  setExpirationAt() {
+    this.expirationAt = moment(this.createdAt).add(7, 'days').toDate();
+  }
+
+  @Column({ default: false }) // product được duyệt bởi admin hay chưa
+  isAccepted: boolean;
+
+  @Column({ type: 'enum', enum: ProductStatus, default: ProductStatus.PENDING })
+  status: ProductStatus;
 
   @ManyToOne(() => UserEntity, (user) => user.products)
   addedBy: UserEntity;

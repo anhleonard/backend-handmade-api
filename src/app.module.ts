@@ -17,6 +17,8 @@ import { OrderProductsModule } from './order_products/order_products.module';
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { AuctionsModule } from './auctions/auctions.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -34,6 +36,9 @@ import { AuctionsModule } from './auctions/auctions.module';
     VariantCategoriesModule,
     OrderProductsModule,
     AuctionsModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+    }),
   ],
   controllers: [],
   providers: [],

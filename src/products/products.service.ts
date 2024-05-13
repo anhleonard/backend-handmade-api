@@ -10,7 +10,7 @@ import {
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from './entities/product.entity';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { CategoriesService } from 'src/categories/categories.service';
 import { UserEntity } from 'src/users/entities/user.entity';
 import dataSource from 'db/data-source';
@@ -44,7 +44,7 @@ export class ProductsService {
   async create(createProductDto: CreateProductDto, currentUser: UserEntity) {
     try {
       // check nếu categories truyền lên rỗng
-      if (createProductDto.categoryId.length === 0) {
+      if (!createProductDto.categoryId.length) {
         throw new BadRequestException('Category ids is not empty.');
       }
 
@@ -80,34 +80,26 @@ export class ProductsService {
       product.store = store;
 
       //variants
-      if (createProductDto.sampleVariants) {
+      if (createProductDto?.sampleVariants) {
+        // return createProductDto.sampleVariants;
         let sampleVariants = createProductDto.sampleVariants;
 
         //Tìm min price
         const minUnitPrice = Math.min(
-          ...sampleVariants.map((variant) => variant.unitPrice),
+          ...sampleVariants.map((variant: any) => variant.unitPrice),
         );
 
         // Tính tổng inventoryNumber
         const totalInventoryNumber = sampleVariants.reduce(
-          (total, variant) => total + variant.inventoryNumber,
+          (total: number, variant: any) => total + variant?.inventoryNumber,
           0,
         );
-
-        let createdVariants = [];
-
-        for (const variant of sampleVariants) {
-          const item = await this.variantService.create(variant);
-          if (item) {
-            createdVariants.push(item);
-          }
-        }
 
         product.price = minUnitPrice;
         product.inventoryNumber = totalInventoryNumber;
         product.images = sampleVariants[0].image;
 
-        product.variants = createdVariants;
+        product.variants = sampleVariants;
       }
 
       return await this.productRepository.save(product);
@@ -269,6 +261,53 @@ export class ProductsService {
     if (!product) throw new NotFoundException('Product not found.');
     return product;
   }
+
+  // ----------------- start: FIND PRODUCTS BY SELLER --------------------- //
+  //1. tất cả
+  async getProductsBySeller(currentUser: UserEntity) {
+    const products = await this.productRepository.find({
+      where: {
+        addedBy: {
+          id: currentUser.id,
+        },
+      },
+      relations: {
+        variants: {
+          variantItems: true,
+        },
+      },
+    });
+
+    if (!products) {
+      throw new NotFoundException('Products not found by seller');
+    }
+
+    return products;
+  }
+
+  async getPendingProducts(currentUser: UserEntity) {
+    const products = await this.productRepository.find({
+      where: {
+        addedBy: {
+          id: currentUser.id,
+        },
+        isAccepted: false,
+      },
+      relations: {
+        category: true,
+        variants: {
+          variantItems: true,
+        },
+      },
+    });
+
+    if (!products) {
+      throw new NotFoundException('Products not found by seller');
+    }
+
+    return products;
+  }
+  // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 
   async update(
     productId: number,

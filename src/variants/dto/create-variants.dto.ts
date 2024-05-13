@@ -15,5 +15,5 @@ export class CreateVariantDto {
 
   @IsNotEmpty({ message: 'variantItemIds can not be blank.' })
   @IsArray()
-  variantItemIds: number[];
+  variantItemIds: string[];
 }

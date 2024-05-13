@@ -13,6 +13,7 @@ import {
   Req,
   UploadedFile,
   UploadedFiles,
+  Res,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -59,6 +60,22 @@ export class ProductsController {
   async findOne(@Param('id') id: string) {
     return await this.productsService.findOne(+id);
   }
+
+  // ----------------- start: FIND PRODUCTS BY SELLER --------------------- //
+  //1. tất cả
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/seller-products')
+  async getProductsBySeller(@CurrentUser() currentUser: UserEntity) {
+    return await this.productsService.getProductsBySeller(currentUser);
+  }
+
+  //2. chờ duyệt (pending)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/pending-products')
+  async getPendingProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.productsService.getPendingProducts(currentUser);
+  }
+  // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   //bao gồm update category cho product
@@ -132,5 +149,10 @@ export class ProductsController {
   @Get('/product-images')
   async getProductImages(@Param('productId') productId: string) {
     return await this.productsService.getProductImages(+productId);
+  }
+
+  @Get('/uploads/image/:path')
+  seeUploadedFile(@Param('path') path: string, @Res() res) {
+    return res.sendFile(path, { root: './uploads/image' });
   }
 }

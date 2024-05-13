@@ -9,6 +9,7 @@ import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { Genders, Roles } from 'src/utility/common/user-roles.enum';
 import { VariantCategoryEntity } from 'src/variant_categories/entities/variant-category.entity';
+import { VariantEntity } from 'src/variants/entities/variant.entity';
 import {
   Column,
   CreateDateColumn,
@@ -97,4 +98,7 @@ export class UserEntity {
 
   @OneToMany(() => ProgressEntity, (pro) => pro.user)
   progresses: ProgressEntity[];
+
+  @OneToMany(() => VariantEntity, (variant) => variant.addedBy)
+  variants: VariantEntity[];
 }
