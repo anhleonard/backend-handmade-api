@@ -93,6 +93,9 @@ export class ProductEntity {
   @Column({ nullable: true }) // tại sao product bị reject
   rejectReason: string;
 
+  @Column({ nullable: true }) // gợi ý chỉnh sửa
+  editHint: string;
+
   @Column({ nullable: true }) // giá mà handmade thu lại
   profitMoney: number;
 

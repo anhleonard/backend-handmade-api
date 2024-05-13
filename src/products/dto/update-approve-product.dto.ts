@@ -18,6 +18,10 @@ export class UpdateApproveProductDto {
   rejectReason: string;
 
   @IsOptional()
+  @IsString()
+  editHint: string;
+
+  @IsOptional()
   @IsNumber()
   profitMoney: number;
 }

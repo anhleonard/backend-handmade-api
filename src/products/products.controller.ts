@@ -83,6 +83,13 @@ export class ProductsController {
   async getSellingProducts(@CurrentUser() currentUser: UserEntity) {
     return await this.productsService.getSellingProducts(currentUser);
   }
+
+  //3. bị cấm (violate)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/violate-products')
+  async getViolateProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.productsService.getViolateProducts(currentUser);
+  }
   // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))

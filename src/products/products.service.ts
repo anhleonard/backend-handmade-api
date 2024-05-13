@@ -334,6 +334,29 @@ export class ProductsService {
 
     return products;
   }
+
+  async getViolateProducts(currentUser: UserEntity) {
+    const products = await this.productRepository.find({
+      where: {
+        addedBy: {
+          id: currentUser.id,
+        },
+        status: ProductStatus.VIOLATE,
+      },
+      relations: {
+        category: true,
+        variants: {
+          variantItems: true,
+        },
+      },
+    });
+
+    if (!products) {
+      throw new NotFoundException('Products not found by seller');
+    }
+
+    return products;
+  }
   // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 
   async update(
@@ -368,11 +391,6 @@ export class ProductsService {
       }
 
       product.category = categories;
-    } else {
-      throw new HttpException(
-        'Category should be not empty!',
-        HttpStatus.BAD_REQUEST,
-      );
     }
 
     //dang o day
@@ -506,8 +524,11 @@ export class ProductsService {
       throw new BadRequestException('Product status is not pending to update!');
     }
 
-    if (!data.isAccepted && data.rejectReason === undefined) {
-      throw new BadRequestException('Reject reason is required!');
+    if (
+      !data.isAccepted &&
+      (data.rejectReason === undefined || data.editHint === undefined)
+    ) {
+      throw new BadRequestException('Reject reason & Edit hint are required!');
     }
 
     if (data.isAccepted && data.profitMoney === undefined) {
@@ -524,7 +545,7 @@ export class ProductsService {
       product.status = ProductStatus.VIOLATE;
     }
 
-    product.updatedAt = new Date();
+    product.updatedAt = new Date(); // update time duyệt
 
     Object.assign(product, data);
 
