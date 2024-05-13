@@ -87,16 +87,14 @@ export class ProductEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ nullable: true })
-  expirationAt: Date; // admin hết hạn duyệt lúc ...
-
-  @BeforeInsert()
-  setExpirationAt() {
-    this.expirationAt = moment(this.createdAt).add(7, 'days').toDate();
-  }
-
   @Column({ default: false }) // product được duyệt bởi admin hay chưa
   isAccepted: boolean;
+
+  @Column({ nullable: true }) // tại sao product bị reject
+  rejectReason: string;
+
+  @Column({ nullable: true }) // giá mà handmade thu lại
+  profitMoney: number;
 
   @Column({ type: 'enum', enum: ProductStatus, default: ProductStatus.PENDING })
   status: ProductStatus;

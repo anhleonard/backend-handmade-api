@@ -21,6 +21,8 @@ import { VariantsService } from 'src/variants/variants.service';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
+import { ProductStatus } from './enum/product.enum';
+import { UpdateApproveProductDto } from './dto/update-approve-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -292,6 +294,31 @@ export class ProductsService {
           id: currentUser.id,
         },
         isAccepted: false,
+        status: ProductStatus.PENDING,
+      },
+      relations: {
+        category: true,
+        variants: {
+          variantItems: true,
+        },
+      },
+    });
+
+    if (!products) {
+      throw new NotFoundException('Products not found by seller');
+    }
+
+    return products;
+  }
+
+  async getSellingProducts(currentUser: UserEntity) {
+    const products = await this.productRepository.find({
+      where: {
+        addedBy: {
+          id: currentUser.id,
+        },
+        isAccepted: true,
+        status: ProductStatus.SELLING,
       },
       relations: {
         category: true,
@@ -363,6 +390,12 @@ export class ProductsService {
 
     if (!product) {
       throw new NotFoundException('Product not found!');
+    }
+
+    if (product?.status !== ProductStatus.PENDING) {
+      throw new BadRequestException(
+        'Status is not pending product. Not permission to remove!',
+      );
     }
 
     const order = await this.orderService.findOneByProductId(product.id);
@@ -457,5 +490,44 @@ export class ProductsService {
     }
 
     return product;
+  }
+
+  //duyệt sp bởi admin
+  async updateApprove(id: number, data: UpdateApproveProductDto) {
+    const product = await this.productRepository.findOne({
+      where: { id },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.status !== ProductStatus.PENDING) {
+      throw new BadRequestException('Product status is not pending to update!');
+    }
+
+    if (!data.isAccepted && data.rejectReason === undefined) {
+      throw new BadRequestException('Reject reason is required!');
+    }
+
+    if (data.isAccepted && data.profitMoney === undefined) {
+      throw new BadRequestException('Profit money is required!');
+    }
+
+    if (data.profitMoney > product.price * 0.35) {
+      throw new BadRequestException('Please reduce profit money!');
+    }
+
+    if (data.isAccepted) {
+      product.status = ProductStatus.SELLING;
+    } else {
+      product.status = ProductStatus.VIOLATE;
+    }
+
+    product.updatedAt = new Date();
+
+    Object.assign(product, data);
+
+    return await this.productRepository.save(product);
   }
 }

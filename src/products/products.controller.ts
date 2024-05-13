@@ -31,6 +31,7 @@ import { ProductsDto } from './dto/products.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'helpers/config';
+import { UpdateApproveProductDto } from './dto/update-approve-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -75,6 +76,13 @@ export class ProductsController {
   async getPendingProducts(@CurrentUser() currentUser: UserEntity) {
     return await this.productsService.getPendingProducts(currentUser);
   }
+
+  //3. đang bán (selling)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/selling-products')
+  async getSellingProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.productsService.getSellingProducts(currentUser);
+  }
   // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
@@ -90,6 +98,16 @@ export class ProductsController {
       updateProductDto,
       currentUser,
     );
+  }
+
+  //duyệt product by admin
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  @Put('/update-approve/:id')
+  async updateApprove(
+    @Param('id') id: string,
+    @Body() data: UpdateApproveProductDto,
+  ) {
+    return await this.productsService.updateApprove(+id, data);
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
