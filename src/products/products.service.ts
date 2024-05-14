@@ -117,7 +117,7 @@ export class ProductsService {
     let limit: number;
 
     if (!query.limit) {
-      limit = 4;
+      limit = 6;
     } else {
       limit = query.limit;
     }
@@ -134,8 +134,6 @@ export class ProductsService {
       .groupBy('product.id,category.id');
 
     const sample = await queryBuilder.getRawMany();
-
-    console.log(sample);
 
     const totalProducts = await queryBuilder.getCount();
 
@@ -187,8 +185,6 @@ export class ProductsService {
   async filterProducts(query: any) {
     const builder = this.productRepository.createQueryBuilder('products');
 
-    // builder.relation(CategoryEntity, 'categories');
-
     if (query?.productName) {
       const name = query.productName.toLowerCase();
 
@@ -214,6 +210,25 @@ export class ProductsService {
       builder.orderBy('products.createdAt', 'ASC');
     }
 
+    // Lọc theo khoảng giá khi price là chuỗi
+    if (query?.minPrice && query?.maxPrice) {
+      builder.andWhere(
+        'CAST(products.price AS FLOAT) BETWEEN :minPrice AND :maxPrice',
+        {
+          minPrice: query.minPrice,
+          maxPrice: query.maxPrice,
+        },
+      );
+    } else if (query?.minPrice) {
+      builder.andWhere('CAST(products.price AS FLOAT) >= :minPrice', {
+        minPrice: query.minPrice,
+      });
+    } else if (query?.maxPrice) {
+      builder.andWhere('CAST(products.price AS FLOAT) <= :maxPrice', {
+        maxPrice: query.maxPrice,
+      });
+    }
+
     //lọc discount
     if (query?.discount) {
       if (parseInt(query?.discount) === 1) {
@@ -222,7 +237,10 @@ export class ProductsService {
     }
 
     const page: number = parseInt(query?.page as any) || 1;
-    const perPage = 10;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
     const total = await builder.getCount();
 
     builder.offset((page - 1) * perPage).limit(perPage);
@@ -266,25 +284,66 @@ export class ProductsService {
 
   // ----------------- start: FIND PRODUCTS BY SELLER --------------------- //
   //1. tất cả
-  async getProductsBySeller(currentUser: UserEntity) {
-    const products = await this.productRepository.find({
-      where: {
-        addedBy: {
-          id: currentUser.id,
-        },
-      },
-      relations: {
-        variants: {
-          variantItems: true,
-        },
-      },
-    });
+  async getProductsBySeller(query: any, currentUser: UserEntity) {
+    const builder = this.productRepository.createQueryBuilder('products');
 
-    if (!products) {
-      throw new NotFoundException('Products not found by seller');
+    if (query?.productName) {
+      const name = query.productName.toLowerCase();
+
+      builder.where(
+        'LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName',
+        {
+          productName: `%${name}%`,
+        },
+      );
     }
 
-    return products;
+    if (currentUser?.id) {
+      const sellerId = currentUser?.id;
+      builder.innerJoin(
+        'products.addedBy',
+        'addedBy',
+        'addedBy.id = :sellerId',
+        { sellerId },
+      );
+    }
+
+    const sort: any = query?.sort;
+
+    if (sort === 'BEST_RATING') {
+      builder
+        .innerJoinAndSelect('products.reviews', 'reviews')
+        .orderBy('reviews.ratings', 'DESC');
+    } else if (sort === 'PRICE_LOW_HIGH') {
+      builder.orderBy('CAST(products.price AS INT)', 'ASC');
+    } else if (sort === 'PRICE_HIGH_LOW') {
+      builder.orderBy('CAST(products.price AS INT)', 'DESC');
+    } else if (sort === 'NEWEST') {
+      builder.orderBy('products.createdAt', 'ASC');
+    }
+
+    //lọc discount
+    if (query?.discount) {
+      if (parseInt(query?.discount) === 1) {
+        builder.where('products.discount IS NOT NULL');
+      }
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 4;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    return {
+      data: await builder.getMany(),
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
   }
 
   async getPendingProducts(currentUser: UserEntity) {
@@ -342,6 +401,53 @@ export class ProductsService {
           id: currentUser.id,
         },
         status: ProductStatus.VIOLATE,
+      },
+      relations: {
+        category: true,
+        variants: {
+          variantItems: true,
+        },
+      },
+    });
+
+    if (!products) {
+      throw new NotFoundException('Products not found by seller');
+    }
+
+    return products;
+  }
+
+  async getEmptyProducts(currentUser: UserEntity) {
+    const products = await this.productRepository.find({
+      where: {
+        addedBy: {
+          id: currentUser.id,
+        },
+        status: ProductStatus.NO_ITEM,
+        inventoryNumber: 0,
+      },
+      relations: {
+        category: true,
+        variants: {
+          variantItems: true,
+        },
+      },
+    });
+
+    if (!products) {
+      throw new NotFoundException('Products not found by seller');
+    }
+
+    return products;
+  }
+
+  async getOffProducts(currentUser: UserEntity) {
+    const products = await this.productRepository.find({
+      where: {
+        addedBy: {
+          id: currentUser.id,
+        },
+        status: ProductStatus.OFF,
       },
       relations: {
         category: true,

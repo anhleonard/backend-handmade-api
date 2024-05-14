@@ -1,6 +1,13 @@
 import { VariantCategoryEntity } from 'src/variant_categories/entities/variant-category.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('variant_items')
 export class VariantItemEntity {
@@ -10,11 +17,8 @@ export class VariantItemEntity {
   @Column()
   name: string;
 
-  @ManyToOne(() => VariantEntity, (item) => item.variantItems, {
-    onDelete: 'SET NULL',
-    nullable: true,
-  })
-  variants: VariantEntity;
+  @ManyToMany(() => VariantEntity, (item) => item.variantItems)
+  variants: VariantEntity[];
 
   @ManyToOne(() => VariantCategoryEntity, (category) => category.variantItems, {
     onDelete: 'SET NULL',

@@ -66,8 +66,11 @@ export class ProductsController {
   //1. tất cả
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Post('/seller-products')
-  async getProductsBySeller(@CurrentUser() currentUser: UserEntity) {
-    return await this.productsService.getProductsBySeller(currentUser);
+  async getProductsBySeller(
+    @Query() query: any,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.productsService.getProductsBySeller(query, currentUser);
   }
 
   //2. chờ duyệt (pending)
@@ -89,6 +92,20 @@ export class ProductsController {
   @Post('/violate-products')
   async getViolateProducts(@CurrentUser() currentUser: UserEntity) {
     return await this.productsService.getViolateProducts(currentUser);
+  }
+
+  //4. hết hàng (no items)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/empty-products')
+  async getEmptyProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.productsService.getEmptyProducts(currentUser);
+  }
+
+  //4. đã tắt (off items)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/off-products')
+  async getOffProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.productsService.getOffProducts(currentUser);
   }
   // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 

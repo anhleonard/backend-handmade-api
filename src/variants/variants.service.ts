@@ -70,6 +70,13 @@ export class VariantsService {
     return variant;
   }
 
+  checkEqualArray(a1: string[], a2: string[]) {
+    if (a1.length !== a2.length) {
+      return false;
+    }
+    return a1.every((value, index) => value === a2[index]);
+  }
+
   async update(
     id: number,
     updateVariantDto: UpdateVariantDto,
@@ -82,10 +89,40 @@ export class VariantsService {
           id: currentUser.id,
         },
       },
+      relations: {
+        variantItems: true,
+      },
     });
 
     if (!variant) {
       throw new NotFoundException('Variant not found');
+    }
+
+    const ids = variant?.variantItems.map((item) => item.id.toString());
+
+    const isSame = this.checkEqualArray(ids, updateVariantDto?.variantItemIds); //check xem ids có giống không
+
+    if (!isSame) {
+      let items = [];
+
+      for (let itemId of updateVariantDto?.variantItemIds) {
+        const variantItem = await this.variantItemRepository.findOne({
+          where: {
+            id: parseInt(itemId),
+          },
+        });
+        if (variantItem) {
+          items.push(variantItem);
+        }
+      }
+
+      if (items.length !== updateVariantDto?.variantItemIds?.length) {
+        throw new BadRequestException(
+          'variant items do not exist. pls create variant category before update product',
+        );
+      }
+
+      variant.variantItems = items;
     }
 
     Object.assign(variant, updateVariantDto);

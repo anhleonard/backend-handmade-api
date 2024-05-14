@@ -5,6 +5,8 @@ import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entit
 import {
   Column,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -24,9 +26,11 @@ export class VariantEntity {
   @Column()
   image: string;
 
-  @OneToMany(() => VariantItemEntity, (item) => item.variants, {
+  @ManyToMany(() => VariantItemEntity, (item) => item.variants, {
     onDelete: 'SET NULL',
+    cascade: true,
   })
+  @JoinTable({ name: 'items_variants' })
   variantItems: VariantItemEntity[];
 
   @ManyToOne(() => ProductEntity, (product) => product.variants, {
