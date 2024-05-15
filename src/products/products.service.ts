@@ -182,8 +182,10 @@ export class ProductsService {
     return { products, totalProducts, limit };
   }
 
-  async filterProducts(query: any) {
+  async filterSellingProducts(query: any) {
     const builder = this.productRepository.createQueryBuilder('products');
+
+    builder.andWhere('products.status = :status', { status: 'SELLING' });
 
     if (query?.productName) {
       const name = query.productName.toLowerCase();
@@ -199,9 +201,10 @@ export class ProductsService {
     const sort: any = query?.sort;
 
     if (sort === 'BEST_RATING') {
-      builder
-        .innerJoinAndSelect('products.reviews', 'reviews')
-        .orderBy('reviews.ratings', 'DESC');
+      // builder
+      //   .innerJoinAndSelect('products.reviews', 'reviews')
+      //   .orderBy('reviews.ratings', 'DESC');
+      builder.orderBy('CAST(products.averageRating AS FLOAT)', 'DESC');
     } else if (sort === 'PRICE_LOW_HIGH') {
       builder.orderBy('CAST(products.price AS INT)', 'ASC');
     } else if (sort === 'PRICE_HIGH_LOW') {
@@ -265,6 +268,7 @@ export class ProductsService {
           },
         },
         collection: true,
+        store: true,
       },
       select: {
         addedBy: {

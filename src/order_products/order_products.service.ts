@@ -61,18 +61,49 @@ export class OrderProductsService {
         );
       }
 
-      const newOrderProduct = {
-        productUnitPrice: variant.unitPrice,
-        productQuantity: createOrderProductDto.productQuantity,
-      };
+      const foundOrderProduct = await this.orderProductRepository.findOne({
+        where: {
+          product: {
+            id: createOrderProductDto.productId,
+          },
+          variant: {
+            id: createOrderProductDto.variantId,
+          },
+          client: {
+            id: currentUser.id,
+          },
+        },
+        relations: {
+          product: true,
+          variant: true,
+          client: true,
+        },
+      });
 
-      const orderProduct = this.orderProductRepository.create(newOrderProduct);
+      if (!foundOrderProduct) {
+        const newOrderProduct = {
+          productUnitPrice: variant.unitPrice,
+          productQuantity: createOrderProductDto.productQuantity,
+        };
 
-      orderProduct.product = product;
-      orderProduct.variant = variant;
-      orderProduct.client = currentUser;
+        const orderProduct =
+          this.orderProductRepository.create(newOrderProduct);
 
-      return await this.orderProductRepository.save(orderProduct);
+        orderProduct.product = product;
+        orderProduct.variant = variant;
+        orderProduct.client = currentUser;
+        orderProduct.code = Math.random().toString();
+
+        return await this.orderProductRepository.save(orderProduct);
+      } else {
+        const updatedOrderProduct = {
+          productUnitPrice: variant.unitPrice,
+          productQuantity: createOrderProductDto.productQuantity,
+        };
+
+        Object.assign(foundOrderProduct, updatedOrderProduct);
+        return await this.orderProductRepository.save(foundOrderProduct);
+      }
     }
 
     // TH2: KHÔNG CÓ VARIANT
@@ -83,17 +114,43 @@ export class OrderProductsService {
         );
       }
 
-      const newOrderProduct = {
-        productUnitPrice: product.price,
-        productQuantity: createOrderProductDto.productQuantity,
-      };
+      const foundOrderProduct = await this.orderProductRepository.findOne({
+        where: {
+          product: {
+            id: createOrderProductDto.productId,
+          },
+          client: {
+            id: currentUser.id,
+          },
+        },
+        relations: {
+          product: true,
+          client: true,
+        },
+      });
 
-      const orderProduct = this.orderProductRepository.create(newOrderProduct);
+      if (!foundOrderProduct) {
+        const newOrderProduct = {
+          productUnitPrice: product.price,
+          productQuantity: createOrderProductDto.productQuantity,
+        };
 
-      orderProduct.product = product;
-      orderProduct.client = currentUser;
+        const orderProduct =
+          this.orderProductRepository.create(newOrderProduct);
 
-      return await this.orderProductRepository.save(orderProduct);
+        orderProduct.product = product;
+        orderProduct.client = currentUser;
+        orderProduct.code = Math.random().toString();
+
+        return await this.orderProductRepository.save(orderProduct);
+      } else {
+        const updatedOrderProduct = {
+          productUnitPrice: product.price,
+          productQuantity: createOrderProductDto.productQuantity,
+        };
+        Object.assign(foundOrderProduct, updatedOrderProduct);
+        return await this.orderProductRepository.save(foundOrderProduct);
+      }
     }
   }
 
@@ -122,7 +179,9 @@ export class OrderProductsService {
       },
       relations: {
         client: true,
-        variant: true,
+        variant: {
+          variantItems: true,
+        },
         product: {
           store: true,
         },

@@ -15,6 +15,9 @@ export class OrderProductEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ unique: true, nullable: false })
+  code: string;
+
   @Column({ type: 'decimal', precision: 30 })
   productUnitPrice: number;
 

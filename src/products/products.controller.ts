@@ -54,7 +54,7 @@ export class ProductsController {
 
   @Get('/filter')
   async filterProducts(@Query() query: any) {
-    return await this.productsService.filterProducts(query);
+    return await this.productsService.filterSellingProducts(query);
   }
 
   @Get(':id')
