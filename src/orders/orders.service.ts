@@ -124,8 +124,9 @@ export class OrdersService {
       await this.productRepository.save(updatedProduct);
     }
 
-    //tính tổng tiền sau giảm
-    totalPayment = provisionalAmount - discountAmount;
+    //tính tổng tiền sau giảm + phí giao hàng
+    totalPayment =
+      provisionalAmount - discountAmount + createOrderDto?.deliveryFee;
 
     if (orderProducts.length === 0) {
       throw new BadRequestException('No item can be sold.');
@@ -137,6 +138,7 @@ export class OrdersService {
     orderEntity.totalAmountItem = orderProducts.length;
     orderEntity.provisionalAmount = provisionalAmount;
     orderEntity.discountAmount = discountAmount;
+    orderEntity.deliveryFee = createOrderDto?.deliveryFee;
     orderEntity.totalPayment = totalPayment;
 
     //thông tin các relations
@@ -145,7 +147,22 @@ export class OrdersService {
     orderEntity.orderProducts = orderProducts;
     orderEntity.store = orderProducts[0]?.product?.store;
 
+    orderEntity.code = this.generateRandomOrderCode(14);
+
     return await this.orderRepository.save(orderEntity);
+  }
+
+  generateRandomOrderCode(length: number) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charactersLength);
+      result += characters.charAt(randomIndex);
+    }
+
+    return result;
   }
 
   async findAll(): Promise<OrderEntity[]> {
@@ -166,6 +183,7 @@ export class OrdersService {
     return await this.orderRepository.findOne({
       where: { id },
       relations: {
+        store: true,
         shippingAddress: true,
         client: true,
         orderProducts: { variant: true, product: true },
@@ -226,10 +244,6 @@ export class OrdersService {
 
     if (updateOrderDto.status === OrderStatus.DELIVERED) {
       order.deliveredAt = new Date();
-    }
-
-    if (updateOrderDto.status === OrderStatus.PROCESSING) {
-      order.isAccepted = true;
     }
 
     order.status = updateOrderDto.status;
@@ -369,5 +383,32 @@ export class OrdersService {
 
   remove(id: number) {
     return `This action removes a #${id} order`;
+  }
+
+  async getOrdersByUser(
+    currentUser: UserEntity,
+    orderByStatus: UpdateOrderDto,
+  ) {
+    const orders = await this.orderRepository.find({
+      where: {
+        client: {
+          id: currentUser.id,
+        },
+        status: orderByStatus.status,
+      },
+      relations: {
+        client: true,
+        store: true,
+        orderProducts: {
+          product: true,
+        },
+      },
+    });
+
+    if (!orders) {
+      throw new NotFoundException('Orders not found.');
+    }
+
+    return orders;
   }
 }

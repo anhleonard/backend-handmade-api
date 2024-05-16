@@ -3,6 +3,8 @@ import {
   CreateDateColumn,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   OneToOne,
@@ -19,6 +21,9 @@ import { StoreEntity } from 'src/stores/entities/stores.entity';
 export class OrderEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ nullable: false, unique: true })
+  code: string;
 
   @Column()
   totalAmountItem: number; // tổng số sp đã chọn mua
@@ -39,15 +44,18 @@ export class OrderEntity {
   updatedAt: Date; //time update order
 
   @Column({ default: false })
-  isAccepted: boolean; // đã được duyệt bởi seller hay chưa
-
-  @Column({ default: false })
   isCanceled: boolean; // đã được hủy hay chưa
 
   @Column({ nullable: true })
   canceledReason: string; // lý do hủy
 
-  // chỉ xuất hiện khi isAccepted by seller là true
+  @Column({ default: false })
+  isPaid: boolean; // đã được thanh toán hay chưa
+
+  @Column({ nullable: true })
+  deliveryFee: number; //phí vận chuyển của đơn hàng
+
+  // chỉ xuất hiện khi isAccepted by seller là true hoặc isPaid = true
   @Column({
     type: 'enum',
     enum: OrderStatus,
@@ -69,10 +77,11 @@ export class OrderEntity {
   })
   shippingAddress: ShippingEntity;
 
-  @OneToMany(() => OrderProductEntity, (op) => op.order, {
+  @ManyToMany(() => OrderProductEntity, (op) => op.orders, {
     onDelete: 'SET NULL',
     cascade: true,
   })
+  @JoinTable({ name: 'orders_order_products' })
   orderProducts: OrderProductEntity[];
 
   @ManyToOne(() => UserEntity, (user) => user.orders)

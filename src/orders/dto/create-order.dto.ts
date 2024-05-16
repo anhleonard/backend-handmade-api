@@ -8,4 +8,8 @@ export class CreateOrderDto {
   @IsNotEmpty({ message: 'orderedProductIds is not empty.' })
   @IsArray()
   orderedProductIds: number[];
+
+  @IsNotEmpty({ message: 'deliveryFee is not empty.' })
+  @IsNumber()
+  deliveryFee: number;
 }

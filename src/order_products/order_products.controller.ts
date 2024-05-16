@@ -68,4 +68,12 @@ export class OrderProductsController {
   async getOrderProductsByUser(@CurrentUser() currentUser: UserEntity) {
     return await this.orderProductsService.getOrderProductsByUser(currentUser);
   }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Post('/selected-order-products')
+  async getSelectedOrderProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.orderProductsService.getSelectedOrderProducts(
+      currentUser,
+    );
+  }
 }

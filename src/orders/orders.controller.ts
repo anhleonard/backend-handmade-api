@@ -20,6 +20,7 @@ import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 import { Roles } from 'src/utility/common/user-roles.enum';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
+import { OrderStatus } from './enums/order-status.enum';
 
 @Controller('orders')
 export class OrdersController {
@@ -67,5 +68,14 @@ export class OrdersController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.ordersService.remove(+id);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Post('/client-orders')
+  async getOrdersByUser(
+    @Body() orderByStatus: UpdateOrderDto,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.ordersService.getOrdersByUser(currentUser, orderByStatus);
   }
 }

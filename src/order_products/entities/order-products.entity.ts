@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -32,8 +33,8 @@ export class OrderProductEntity {
   })
   variant: VariantEntity;
 
-  @ManyToOne(() => OrderEntity, (order) => order.orderProducts)
-  order: OrderEntity;
+  @ManyToMany(() => OrderEntity, (order) => order.orderProducts)
+  orders: OrderEntity[];
 
   @ManyToOne(() => ProductEntity, (prod) => prod.products, {
     onDelete: 'SET NULL',

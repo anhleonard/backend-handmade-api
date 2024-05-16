@@ -193,10 +193,12 @@ export class OrderProductsService {
     }
 
     let currentStoreId = -99999999999;
+    let existedStoreIds: number[] = [];
 
     for (let rawOrder of orderProducts) {
       const storeId = rawOrder.product?.store?.id; // Lấy ID của cửa hàng của sản phẩm đầu tiên (giả sử tồn tại)
-      if (currentStoreId !== storeId) {
+      if (currentStoreId !== storeId && !existedStoreIds.includes(storeId)) {
+        existedStoreIds.push(storeId);
         currentStoreId = storeId;
         const orderProductsSameStore = orderProducts.filter((orderProduct) => {
           return orderProduct.product.store.id === storeId;
@@ -253,5 +255,52 @@ export class OrderProductsService {
     }
 
     return await this.orderProductRepository.remove(orderProduct);
+  }
+
+  async getSelectedOrderProducts(currentUser: UserEntity) {
+    const selectedOrderProducts = [];
+
+    const orderProducts = await this.orderProductRepository.find({
+      where: {
+        client: {
+          id: currentUser.id,
+        },
+        isSelected: true,
+      },
+      relations: {
+        client: true,
+        variant: {
+          variantItems: true,
+        },
+        product: {
+          store: true,
+        },
+      },
+    });
+
+    if (!orderProducts) {
+      throw new NotFoundException('Order products not found.');
+    }
+
+    let currentStoreId = -99999999999;
+    let existedStoreIds: number[] = [];
+
+    for (let rawOrder of orderProducts) {
+      const storeId = rawOrder.product?.store?.id; // Lấy ID của cửa hàng của sản phẩm đầu tiên (giả sử tồn tại)
+      if (currentStoreId !== storeId && !existedStoreIds.includes(storeId)) {
+        existedStoreIds.push(storeId);
+        currentStoreId = storeId;
+        const orderProductsSameStore = orderProducts.filter((orderProduct) => {
+          return orderProduct.product.store.id === storeId;
+        });
+        const storeRawOrder = {
+          store: rawOrder.product?.store,
+          orderProducts: orderProductsSameStore,
+        };
+        selectedOrderProducts.push(storeRawOrder);
+      }
+    }
+
+    return selectedOrderProducts;
   }
 }
