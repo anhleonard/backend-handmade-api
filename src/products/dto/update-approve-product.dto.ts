@@ -1,12 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateProductDto } from './create-product.dto';
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateApproveProductDto {
   @IsNotEmpty({ message: 'isAccepted can not be blank.' })
@@ -20,8 +12,4 @@ export class UpdateApproveProductDto {
   @IsOptional()
   @IsString()
   editHint: string;
-
-  @IsOptional()
-  @IsNumber()
-  profitMoney: number;
 }

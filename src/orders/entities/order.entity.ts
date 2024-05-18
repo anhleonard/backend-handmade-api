@@ -52,16 +52,21 @@ export class OrderEntity {
   @Column({ default: false })
   isPaid: boolean; // đã được thanh toán hay chưa
 
+  @Column({ default: false })
+  isReadyDelivery: boolean; // đã sẵn sàng giao chưa
+
   @Column({ nullable: true })
   deliveryFee: number; //phí vận chuyển của đơn hàng
 
-  // chỉ xuất hiện khi isAccepted by seller là true hoặc isPaid = true
   @Column({
     type: 'enum',
     enum: OrderStatus,
     default: OrderStatus.WAITING_PAYMENT,
   })
   status: string;
+
+  @Column({ nullable: true })
+  processingAt: Date;
 
   @Column({ nullable: true })
   shippedAt: Date;

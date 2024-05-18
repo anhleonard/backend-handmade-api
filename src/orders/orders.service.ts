@@ -186,7 +186,13 @@ export class OrdersService {
         store: true,
         shippingAddress: true,
         client: true,
-        orderProducts: { variant: true, product: true },
+        orderProducts: {
+          variant: {
+            variantItems: true,
+          },
+          product: true,
+        },
+        updatedBy: true,
       },
     });
   }
@@ -236,6 +242,10 @@ export class OrdersService {
       order.status === OrderStatus.SHIPPED
     ) {
       return order;
+    }
+
+    if (updateOrderDto.status === OrderStatus.PROCESSING) {
+      order.processingAt = new Date();
     }
 
     if (updateOrderDto.status === OrderStatus.SHIPPED) {
@@ -401,6 +411,9 @@ export class OrdersService {
         store: true,
         orderProducts: {
           product: true,
+          variant: {
+            variantItems: true,
+          },
         },
       },
     });
@@ -410,5 +423,64 @@ export class OrdersService {
     }
 
     return orders;
+  }
+
+  async getOrdersBySeller(
+    currentUser: UserEntity,
+    orderByStatus: UpdateOrderDto,
+  ) {
+    const orders = await this.orderRepository.find({
+      where: {
+        store: {
+          owner: {
+            id: currentUser?.id,
+          },
+        },
+        status: orderByStatus.status,
+      },
+      relations: {
+        client: true,
+        store: true,
+        orderProducts: {
+          product: true,
+          variant: {
+            variantItems: true,
+          },
+        },
+        shippingAddress: true,
+        updatedBy: true,
+      },
+    });
+
+    if (!orders) {
+      throw new NotFoundException('Orders not found.');
+    }
+
+    return orders;
+  }
+
+  async updateReadyForAdmin(id: number, currentUser: UserEntity) {
+    let order = await this.orderRepository.findOne({
+      where: {
+        id,
+        status: OrderStatus.PROCESSING,
+        isReadyDelivery: false,
+        store: {
+          owner: {
+            id: currentUser?.id,
+          },
+        },
+      },
+      relations: {
+        client: true,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    order.isReadyDelivery = true;
+    return await this.orderRepository.save(order);
   }
 }

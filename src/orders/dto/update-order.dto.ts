@@ -5,4 +5,8 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsEnum(OrderStatus)
   status: OrderStatus;
+
+  @IsOptional()
+  @IsBoolean()
+  isReadyDelivery: boolean;
 }

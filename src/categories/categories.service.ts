@@ -22,14 +22,20 @@ export class CategoriesService {
     return await this.categoryRepository.save(category);
   }
 
-  async findAll(): Promise<CategoryEntity[]> {
-    return await this.categoryRepository.find({
+  async findAll() {
+    const categories = await this.categoryRepository.find({
       select: {
         id: true,
         title: true,
         description: true,
+        products: true,
+      },
+      relations: {
+        products: true,
       },
     });
+
+    return categories;
   }
 
   async findOne(id: number): Promise<CategoryEntity> {
@@ -45,6 +51,61 @@ export class CategoriesService {
       },
     });
     if (!category) throw new NotFoundException('Category not found.');
+    return category;
+  }
+
+  async findOneAndFilterProducts(id: number, query: any) {
+    const builder = this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.products', 'products')
+      .where('category.id = :id', { id: id });
+
+    //filter selling products
+    builder.andWhere('products.status = :status', { status: 'SELLING' });
+
+    // filter by discount
+    if (query?.discount) {
+      if (parseInt(query?.discount) == 1) {
+        builder.andWhere('products.discount > 0');
+      }
+    }
+
+    //filter sort
+    const sort: any = query?.sort;
+
+    if (sort === 'BEST_RATING') {
+      builder.orderBy('CAST(products.averageRating AS FLOAT)', 'DESC');
+    } else if (sort === 'PRICE_LOW_HIGH') {
+      builder.orderBy('CAST(products.price AS INT)', 'ASC');
+    } else if (sort === 'PRICE_HIGH_LOW') {
+      builder.orderBy('CAST(products.price AS INT)', 'DESC');
+    } else if (sort === 'NEWEST') {
+      builder.orderBy('products.createdAt', 'DESC');
+    } else if (sort === 'MOST_POPULAR') {
+      builder.orderBy('products.soldNumber', 'DESC');
+    }
+
+    // Lọc theo khoảng giá khi price là chuỗi
+    if (query?.minPrice && query?.maxPrice) {
+      builder.andWhere(
+        'CAST(products.price AS FLOAT) BETWEEN :minPrice AND :maxPrice',
+        {
+          minPrice: query.minPrice,
+          maxPrice: query.maxPrice,
+        },
+      );
+    } else if (query?.minPrice) {
+      builder.andWhere('CAST(products.price AS FLOAT) >= :minPrice', {
+        minPrice: query.minPrice,
+      });
+    } else if (query?.maxPrice) {
+      builder.andWhere('CAST(products.price AS FLOAT) <= :maxPrice', {
+        maxPrice: query.maxPrice,
+      });
+    }
+
+    const category = await builder.getOne();
+
     return category;
   }
 

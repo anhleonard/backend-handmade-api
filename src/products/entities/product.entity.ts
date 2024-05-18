@@ -96,9 +96,6 @@ export class ProductEntity {
   @Column({ nullable: true }) // gợi ý chỉnh sửa
   editHint: string;
 
-  @Column({ nullable: true }) // giá mà handmade thu lại
-  profitMoney: number;
-
   @Column({ type: 'enum', enum: ProductStatus, default: ProductStatus.PENDING })
   status: ProductStatus;
 

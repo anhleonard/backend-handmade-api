@@ -40,12 +40,13 @@ export class OrdersController {
     return await this.ordersService.findAll();
   }
 
+  @UseGuards(AuthenticationGuard)
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<OrderEntity> {
     return await this.ordersService.findOne(+id);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER, Roles.ADMIN]))
   @Put('/update/:id')
   async update(
     @Param('id') id: string,
@@ -55,8 +56,8 @@ export class OrdersController {
     return await this.ordersService.update(+id, updateOrderDto, currentUser);
   }
 
-  @Put('cancel/:id')
   @UseGuards(AuthenticationGuard)
+  @Put('cancel/:id')
   async cancelled(
     @Param('id') id: string,
     @Body() cancelOrderDto: CancelOrderDto,
@@ -77,5 +78,26 @@ export class OrdersController {
     @CurrentUser() currentUser: UserEntity,
   ) {
     return await this.ordersService.getOrdersByUser(currentUser, orderByStatus);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/seller-orders/')
+  async getOrdersBySeller(
+    @Body() orderByStatus: UpdateOrderDto,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.ordersService.getOrdersBySeller(
+      currentUser,
+      orderByStatus,
+    );
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Put('/update-ready-delivery/:id')
+  async updateReadyForAdmin(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.ordersService.updateReadyForAdmin(+id, currentUser);
   }
 }

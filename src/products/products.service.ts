@@ -201,16 +201,15 @@ export class ProductsService {
     const sort: any = query?.sort;
 
     if (sort === 'BEST_RATING') {
-      // builder
-      //   .innerJoinAndSelect('products.reviews', 'reviews')
-      //   .orderBy('reviews.ratings', 'DESC');
       builder.orderBy('CAST(products.averageRating AS FLOAT)', 'DESC');
     } else if (sort === 'PRICE_LOW_HIGH') {
       builder.orderBy('CAST(products.price AS INT)', 'ASC');
     } else if (sort === 'PRICE_HIGH_LOW') {
       builder.orderBy('CAST(products.price AS INT)', 'DESC');
     } else if (sort === 'NEWEST') {
-      builder.orderBy('products.createdAt', 'ASC');
+      builder.orderBy('products.createdAt', 'DESC');
+    } else if (sort === 'MOST_POPULAR') {
+      builder.orderBy('products.soldNumber', 'DESC');
     }
 
     // Lọc theo khoảng giá khi price là chuỗi
@@ -639,14 +638,6 @@ export class ProductsService {
       (data.rejectReason === undefined || data.editHint === undefined)
     ) {
       throw new BadRequestException('Reject reason & Edit hint are required!');
-    }
-
-    if (data.isAccepted && data.profitMoney === undefined) {
-      throw new BadRequestException('Profit money is required!');
-    }
-
-    if (data.profitMoney > product.price * 0.35) {
-      throw new BadRequestException('Please reduce profit money!');
     }
 
     if (data.isAccepted) {

@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -33,7 +34,7 @@ export class CategoriesController {
   }
 
   @Get()
-  async findAll(): Promise<CategoryEntity[]> {
+  async findAll() {
     return await this.categoriesService.findAll();
   }
 
@@ -56,5 +57,10 @@ export class CategoriesController {
   @Delete('/delate/:id')
   remove(@Param('id') id: string) {
     return this.categoriesService.remove(+id);
+  }
+
+  @Get('/filter/:id')
+  async findOneAndFilterProducts(@Param('id') id: string, @Query() query: any) {
+    return await this.categoriesService.findOneAndFilterProducts(+id, query);
   }
 }
