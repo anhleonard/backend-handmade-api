@@ -231,10 +231,10 @@ export class ProductsService {
       });
     }
 
-    //lọc discount
+    // filter by discount
     if (query?.discount) {
-      if (parseInt(query?.discount) === 1) {
-        builder.where('products.discount IS NOT NULL');
+      if (parseInt(query?.discount) == 1) {
+        builder.andWhere('products.discount > 0');
       }
     }
 

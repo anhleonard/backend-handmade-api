@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AuctionsService } from './auctions.service';
@@ -45,6 +46,11 @@ export class AuctionsController {
       updateAuctionDto,
       currentUser,
     );
+  }
+
+  @Get('/filter/')
+  async filterAuctions(@Query() query: any) {
+    return await this.auctionsService.filterAuctions(query);
   }
 
   @Get('/:id')

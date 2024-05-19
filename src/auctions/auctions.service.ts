@@ -14,6 +14,7 @@ import { Roles } from 'src/utility/common/user-roles.enum';
 import { BidderEntity } from './entities/bidder.entity';
 import { CreateBidderDto } from './dto/bidder/create-bidder.dto';
 import { UpdateBidderDto } from './dto/bidder/update-bidder.dto';
+import { AuctionStatus } from './enum/auction.enum';
 
 @Injectable()
 export class AuctionsService {
@@ -94,6 +95,7 @@ export class AuctionsService {
 
     if (updateAuctionDto.isAccepted === true) {
       auction.additionalComment = null;
+      auction.status = AuctionStatus.AUCTIONING;
     }
 
     if (updateAuctionDto.maxAmount !== undefined) {
@@ -113,7 +115,65 @@ export class AuctionsService {
 
     Object.assign(auction, updateAuctionDto);
 
+    auction.updatedAt = new Date();
+
     return await this.auctionRepository.save(auction);
+  }
+
+  async filterAuctions(query: any) {
+    const builder = this.auctionRepository.createQueryBuilder('auctions');
+
+    builder
+      .leftJoinAndSelect('auctions.candidates', 'candidates')
+      .leftJoinAndSelect('candidates.store', 'store')
+      .leftJoinAndSelect('store.owner', 'owner')
+      .where('auctions.status = :status', {
+        status: AuctionStatus.AUCTIONING,
+      });
+
+    if (query?.title) {
+      const name = query.title.toLowerCase();
+      builder.andWhere(
+        'LOWER(auctions.name) LIKE :title OR LOWER(auctions.description) LIKE :title',
+        { title: `%${name}%` },
+      );
+    }
+
+    if (query?.minPrice && query?.maxPrice) {
+      builder.andWhere(
+        'CAST(auctions.maxAmount AS INT) BETWEEN :minPrice AND :maxPrice',
+        { minPrice: query.minPrice, maxPrice: query.maxPrice },
+      );
+    } else if (query?.minPrice) {
+      builder.andWhere('CAST(auctions.maxAmount AS INT) >= :minPrice', {
+        minPrice: query.minPrice,
+      });
+    } else if (query?.maxPrice) {
+      builder.andWhere('CAST(auctions.maxAmount AS INT) <= :maxPrice', {
+        maxPrice: query.maxPrice,
+      });
+    }
+
+    // Thêm điều kiện lọc theo số ngày
+    if (query?.minDay && query?.maxDay) {
+      builder.andWhere('auctions.maxDays BETWEEN :minDay AND :maxDay', {
+        minDay: query.minDay,
+        maxDay: query.maxDay,
+      });
+    } else if (query?.minDay) {
+      builder.andWhere('auctions.maxDays >= :minDay', {
+        minDay: query.minDay,
+      });
+    } else if (query?.maxDay) {
+      builder.andWhere('auctions.maxDays <= :maxDay', {
+        maxDay: query.maxDay,
+      });
+
+      const ex = builder.getQueryAndParameters();
+      console.log({ ex });
+    }
+
+    return await builder.getMany();
   }
 
   async findOne(id: number) {
@@ -123,7 +183,9 @@ export class AuctionsService {
       },
       relations: {
         candidates: {
-          store: true,
+          store: {
+            owner: true,
+          },
         },
         progresses: true,
       },

@@ -32,4 +32,7 @@ export class CreateAuctionDto {
 
   @IsNotEmpty({ message: 'shippingId can not be empty.' })
   shippingId: number;
+
+  @IsNotEmpty({ message: 'maxDays can not be empty.' })
+  maxDays: number;
 }

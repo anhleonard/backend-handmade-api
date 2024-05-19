@@ -7,7 +7,6 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   Timestamp,
 } from 'typeorm';
@@ -44,11 +43,17 @@ export class AuctionEntity {
   @CreateDateColumn()
   createdAt: Timestamp;
 
+  @CreateDateColumn()
+  updatedAt: Date;
+
   @Column()
   closedDate: Date;
 
   @Column()
-  deposit: number;
+  maxDays: number; //số ngày mà dự án nên hoàn thành sau khi đấu giá xong
+
+  @Column()
+  deposit: number; // lợi nhuận
 
   @BeforeInsert()
   calculateDeposit() {
@@ -58,12 +63,12 @@ export class AuctionEntity {
   }
 
   @Column({ default: false })
-  readyToLaunch: boolean;
+  readyToLaunch: boolean; //đã ss được giao hay chưa
 
   @Column({
     type: 'enum',
     enum: AuctionStatus,
-    default: AuctionStatus.AUCTIONING,
+    nullable: true,
   })
   status: string;
 
