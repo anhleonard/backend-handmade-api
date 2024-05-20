@@ -53,7 +53,7 @@ export class AuctionsController {
     );
   }
 
-  @UseGuards(AuthenticationGuard)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Put('/update-status/:id')
   async updateStatus(
     @Param('id') id: string,

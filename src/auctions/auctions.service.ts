@@ -78,28 +78,28 @@ export class AuctionsService {
       throw new NotFoundException('Auction not found.');
     }
 
-    if (currentUser.role === Roles.ADMIN) {
-      if (
-        updateAuctionDto.additionalComment === undefined &&
-        updateAuctionDto.isAccepted === undefined
-      ) {
-        throw new BadRequestException(
-          'Role ADMIN: require additionalComment & isAccepted fields',
-        );
-      } else if (
-        updateAuctionDto.additionalComment === undefined &&
-        updateAuctionDto.isAccepted === false
-      ) {
-        throw new BadRequestException('Role ADMIN: additional comment pls');
-      } else if (
-        updateAuctionDto.additionalComment !== undefined &&
-        updateAuctionDto.isAccepted === true
-      ) {
-        throw new BadRequestException(
-          'Role ADMIN: remove additional comment pls',
-        );
-      }
-    }
+    // if (currentUser.role === Roles.ADMIN) {
+    //   if (
+    //     updateAuctionDto.additionalComment === undefined &&
+    //     updateAuctionDto.isAccepted === undefined
+    //   ) {
+    //     throw new BadRequestException(
+    //       'Role ADMIN: require additionalComment & isAccepted fields',
+    //     );
+    //   } else if (
+    //     updateAuctionDto.additionalComment === undefined &&
+    //     updateAuctionDto.isAccepted === false
+    //   ) {
+    //     throw new BadRequestException('Role ADMIN: additional comment pls');
+    //   } else if (
+    //     updateAuctionDto.additionalComment !== undefined &&
+    //     updateAuctionDto.isAccepted === true
+    //   ) {
+    //     throw new BadRequestException(
+    //       'Role ADMIN: remove additional comment pls',
+    //     );
+    //   }
+    // }
 
     if (updateAuctionDto.isAccepted === true) {
       auction.additionalComment = null;
@@ -110,16 +110,16 @@ export class AuctionsService {
       auction.deposit = updateAuctionDto.maxAmount * 0.3;
     }
 
-    if (currentUser.role === Roles.USER) {
-      if (
-        updateAuctionDto.additionalComment !== undefined ||
-        updateAuctionDto.isAccepted !== undefined
-      ) {
-        throw new BadRequestException(
-          'additionalComment & isAccepted fields must be updated by ADMIN',
-        );
-      }
-    }
+    // if (currentUser.role === Roles.USER) {
+    //   if (
+    //     updateAuctionDto.additionalComment !== undefined ||
+    //     updateAuctionDto.isAccepted !== undefined
+    //   ) {
+    //     throw new BadRequestException(
+    //       'additionalComment & isAccepted fields must be updated by ADMIN',
+    //     );
+    //   }
+    // }
 
     Object.assign(auction, updateAuctionDto);
 
@@ -211,6 +211,7 @@ export class AuctionsService {
         progresses: {
           user: true,
         },
+        shipping: true,
       },
     });
 
@@ -353,6 +354,7 @@ export class AuctionsService {
       relations: {
         owner: true,
         candidates: true,
+        progresses: true,
       },
     });
 
