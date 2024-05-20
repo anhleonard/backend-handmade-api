@@ -17,6 +17,10 @@ import { UpdateBidderDto } from './dto/bidder/update-bidder.dto';
 import { AuctionStatus } from './enum/auction.enum';
 import { GetByAuctionStatus } from './dto/auction/get-auction-status.dto';
 import { UpdateAuctionStatusDto } from './dto/auction/update-status-auction.dto';
+import { CreateProgressDto } from './dto/progress/create-progress.dto';
+import { ProgressEntity } from './entities/progress.entity';
+import { UpdateProductDto } from 'src/products/dto/update-product.dto';
+import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 
 @Injectable()
 export class AuctionsService {
@@ -29,6 +33,8 @@ export class AuctionsService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(BidderEntity)
     private readonly bidderRepository: Repository<BidderEntity>,
+    @InjectRepository(ProgressEntity)
+    private readonly progressRepository: Repository<ProgressEntity>,
   ) {}
 
   /// --------------- auction ------------------- ///
@@ -152,43 +158,40 @@ export class AuctionsService {
     if (query?.title) {
       const name = query.title.toLowerCase();
       builder.andWhere(
-        'LOWER(auctions.name) LIKE :title OR LOWER(auctions.description) LIKE :title',
+        '(LOWER(auctions.name) LIKE :title OR LOWER(auctions.description) LIKE :title)',
         { title: `%${name}%` },
       );
     }
 
     if (query?.minPrice && query?.maxPrice) {
       builder.andWhere(
-        'CAST(auctions.maxAmount AS INT) BETWEEN :minPrice AND :maxPrice',
+        '(CAST(auctions.maxAmount AS INT) BETWEEN :minPrice AND :maxPrice)',
         { minPrice: query.minPrice, maxPrice: query.maxPrice },
       );
     } else if (query?.minPrice) {
-      builder.andWhere('CAST(auctions.maxAmount AS INT) >= :minPrice', {
+      builder.andWhere('(CAST(auctions.maxAmount AS INT) >= :minPrice)', {
         minPrice: query.minPrice,
       });
     } else if (query?.maxPrice) {
-      builder.andWhere('CAST(auctions.maxAmount AS INT) <= :maxPrice', {
+      builder.andWhere('(CAST(auctions.maxAmount AS INT) <= :maxPrice)', {
         maxPrice: query.maxPrice,
       });
     }
 
     // Thêm điều kiện lọc theo số ngày
     if (query?.minDay && query?.maxDay) {
-      builder.andWhere('auctions.maxDays BETWEEN :minDay AND :maxDay', {
+      builder.andWhere('(auctions.maxDays BETWEEN :minDay AND :maxDay)', {
         minDay: query.minDay,
         maxDay: query.maxDay,
       });
     } else if (query?.minDay) {
-      builder.andWhere('auctions.maxDays >= :minDay', {
+      builder.andWhere('(auctions.maxDays >= :minDay)', {
         minDay: query.minDay,
       });
     } else if (query?.maxDay) {
-      builder.andWhere('auctions.maxDays <= :maxDay', {
+      builder.andWhere('(auctions.maxDays <= :maxDay)', {
         maxDay: query.maxDay,
       });
-
-      const ex = builder.getQueryAndParameters();
-      console.log({ ex });
     }
 
     return await builder.getMany();
@@ -205,7 +208,9 @@ export class AuctionsService {
             owner: true,
           },
         },
-        progresses: true,
+        progresses: {
+          user: true,
+        },
       },
     });
 
@@ -301,6 +306,7 @@ export class AuctionsService {
     auction.status = AuctionStatus.PROGRESS;
 
     Object.assign(bidder, updateBidderDto);
+    bidder.acceptedAt = new Date(); //cập nhật ngày accept từ phía khách
 
     const updatedAuction = await this.auctionRepository.save(auction);
     bidder.auction = updatedAuction;
@@ -334,6 +340,10 @@ export class AuctionsService {
       },
     };
 
+    if (auctionStatus?.status === null) {
+      whereCondition.isAccepted = false;
+    }
+
     if (auctionStatus?.status) {
       whereCondition.status = auctionStatus.status;
     }
@@ -351,5 +361,93 @@ export class AuctionsService {
     }
 
     return auctions;
+  }
+
+  async findAllSellerAuctions(
+    auctionStatus: GetByAuctionStatus,
+    currentUser: UserEntity,
+  ) {
+    const whereCondition: any = {
+      candidates: {
+        store: {
+          owner: {
+            id: currentUser.id,
+          },
+        },
+        isSelected: true,
+      },
+    };
+
+    if (auctionStatus?.status) {
+      whereCondition.status = auctionStatus.status;
+    }
+
+    const auctions = await this.auctionRepository.find({
+      where: whereCondition,
+      relations: {
+        candidates: {
+          store: {
+            owner: true,
+          },
+        },
+      },
+    });
+
+    if (!auctions) {
+      throw new NotFoundException('Auctions not found.');
+    }
+
+    return auctions;
+  }
+
+  /// --------------- PROGRESS ------------------- ///
+  async createProgress(
+    createProgressDto: CreateProgressDto,
+    currentUser: UserEntity,
+  ) {
+    const auction = await this.auctionRepository.findOne({
+      where: {
+        id: createProgressDto.auctionId,
+      },
+    });
+
+    if (!auction) {
+      throw new NotFoundException('Auction not found');
+    }
+
+    const createProgress = this.progressRepository.create(createProgressDto);
+
+    createProgress.auction = auction;
+    createProgress.user = currentUser;
+
+    return await this.progressRepository.save(createProgress);
+  }
+
+  async updateProgress(
+    id: number,
+    updateProgressDto: UpdateProgressDto,
+    currentUser: UserEntity,
+  ) {
+    const progress = await this.progressRepository.findOne({
+      where: {
+        id,
+        user: {
+          id: currentUser.id,
+        },
+      },
+      relations: {
+        user: true,
+      },
+    });
+
+    if (!progress) {
+      throw new NotFoundException('Progress not found');
+    }
+
+    Object.assign(progress, updateProgressDto);
+
+    progress.updatedAt = new Date();
+
+    return await this.progressRepository.save(progress);
   }
 }

@@ -12,12 +12,15 @@ export class BidderEntity {
 
   @Column()
   estimatedDay: number;
-
+  ProgressEntity;
   @Column()
   selfIntroduce: string;
 
   @Column({ default: false })
   isSelected: boolean; //bidder này có đc chọn hay không
+
+  @Column({ nullable: true })
+  acceptedAt: Date; //bidder này được chọn lúc nào
 
   @ManyToOne(() => StoreEntity, (store) => store.bidders)
   store: StoreEntity;

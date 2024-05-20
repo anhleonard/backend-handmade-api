@@ -25,7 +25,7 @@ export class ProgressEntity {
   createdAt: Timestamp;
 
   @UpdateDateColumn()
-  updatedAt: Timestamp;
+  updatedAt: Date;
 
   @ManyToOne(() => AuctionEntity, (pro) => pro.progresses)
   auction: AuctionEntity;

@@ -20,6 +20,9 @@ import { CreateBidderDto } from './dto/bidder/create-bidder.dto';
 import { UpdateBidderDto } from './dto/bidder/update-bidder.dto';
 import { GetByAuctionStatus } from './dto/auction/get-auction-status.dto';
 import { UpdateAuctionStatusDto } from './dto/auction/update-status-auction.dto';
+import { CreateProgressDto } from './dto/progress/create-progress.dto';
+import { UpdateProductDto } from 'src/products/dto/update-product.dto';
+import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -65,13 +68,26 @@ export class AuctionsController {
   }
 
   //get all auctions of client
-  @UseGuards(AuthenticationGuard)
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
   @Post('/client-auctions/')
   async findAllClientAuctions(
     @Body() auctionStatus: GetByAuctionStatus,
     @CurrentUser() currentUser: UserEntity,
   ) {
     return await this.auctionsService.findAllClientAuctions(
+      auctionStatus,
+      currentUser,
+    );
+  }
+
+  //get all auctions of seller
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/seller-auctions/')
+  async findAllSellerAuctions(
+    @Body() auctionStatus: GetByAuctionStatus,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.auctionsService.findAllSellerAuctions(
       auctionStatus,
       currentUser,
     );
@@ -112,5 +128,32 @@ export class AuctionsController {
   @Get('/bidders/:id')
   async findOneBidder(@Param('id') id: string) {
     return await this.auctionsService.findOneBidder(+id);
+  }
+
+  /// --------------- progress ------------------- ///
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER, Roles.USER]))
+  @Post('/create-progress')
+  async createProgress(
+    @Body() createProgressDto: CreateProgressDto,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.auctionsService.createProgress(
+      createProgressDto,
+      currentUser,
+    );
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER, Roles.USER]))
+  @Put('/update-progress/:id')
+  async updateProgress(
+    @Param('id') id: string,
+    @Body() updateProgressDto: UpdateProgressDto,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.auctionsService.updateProgress(
+      +id,
+      updateProgressDto,
+      currentUser,
+    );
   }
 }
