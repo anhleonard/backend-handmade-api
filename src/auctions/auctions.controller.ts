@@ -18,6 +18,8 @@ import { CreateAuctionDto } from './dto/auction/create-auction.dto';
 import { UpdateAuctionDto } from './dto/auction/update-auction.dto';
 import { CreateBidderDto } from './dto/bidder/create-bidder.dto';
 import { UpdateBidderDto } from './dto/bidder/update-bidder.dto';
+import { GetByAuctionStatus } from './dto/auction/get-auction-status.dto';
+import { UpdateAuctionStatusDto } from './dto/auction/update-status-auction.dto';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -48,9 +50,31 @@ export class AuctionsController {
     );
   }
 
+  @UseGuards(AuthenticationGuard)
+  @Put('/update-status/:id')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() updateStatus: UpdateAuctionStatusDto,
+  ) {
+    return await this.auctionsService.updateStatus(+id, updateStatus);
+  }
+
   @Get('/filter/')
   async filterAuctions(@Query() query: any) {
     return await this.auctionsService.filterAuctions(query);
+  }
+
+  //get all auctions of client
+  @UseGuards(AuthenticationGuard)
+  @Post('/client-auctions/')
+  async findAllClientAuctions(
+    @Body() auctionStatus: GetByAuctionStatus,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.auctionsService.findAllClientAuctions(
+      auctionStatus,
+      currentUser,
+    );
   }
 
   @Get('/:id')

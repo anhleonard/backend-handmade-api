@@ -15,6 +15,8 @@ import { BidderEntity } from './entities/bidder.entity';
 import { CreateBidderDto } from './dto/bidder/create-bidder.dto';
 import { UpdateBidderDto } from './dto/bidder/update-bidder.dto';
 import { AuctionStatus } from './enum/auction.enum';
+import { GetByAuctionStatus } from './dto/auction/get-auction-status.dto';
+import { UpdateAuctionStatusDto } from './dto/auction/update-status-auction.dto';
 
 @Injectable()
 export class AuctionsService {
@@ -118,6 +120,22 @@ export class AuctionsService {
     auction.updatedAt = new Date();
 
     return await this.auctionRepository.save(auction);
+  }
+
+  async updateStatus(id: number, updateStatus: UpdateAuctionStatusDto) {
+    const auction = await this.auctionRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!auction) {
+      throw new NotFoundException('Auction not found.');
+    }
+
+    Object.assign(auction, updateStatus);
+
+    return this.auctionRepository.save(auction);
   }
 
   async filterAuctions(query: any) {
@@ -247,6 +265,13 @@ export class AuctionsService {
       },
     });
 
+    if (
+      bidder?.auction?.status &&
+      bidder?.auction?.status !== AuctionStatus.AUCTIONING
+    ) {
+      throw new BadRequestException('This project has selected candidates!');
+    }
+
     if (!bidder) {
       throw new NotFoundException('Bidder not found.');
     }
@@ -267,7 +292,18 @@ export class AuctionsService {
       );
     }
 
+    const auction = await this.auctionRepository.findOne({
+      where: {
+        id: bidder.auction.id,
+      },
+    });
+
+    auction.status = AuctionStatus.PROGRESS;
+
     Object.assign(bidder, updateBidderDto);
+
+    const updatedAuction = await this.auctionRepository.save(auction);
+    bidder.auction = updatedAuction;
     return await this.bidderRepository.save(bidder);
   }
 
@@ -286,5 +322,34 @@ export class AuctionsService {
     }
 
     return bidder;
+  }
+
+  async findAllClientAuctions(
+    auctionStatus: GetByAuctionStatus,
+    currentUser: UserEntity,
+  ) {
+    const whereCondition: any = {
+      owner: {
+        id: currentUser.id,
+      },
+    };
+
+    if (auctionStatus?.status) {
+      whereCondition.status = auctionStatus.status;
+    }
+
+    const auctions = await this.auctionRepository.find({
+      where: whereCondition,
+      relations: {
+        owner: true,
+        candidates: true,
+      },
+    });
+
+    if (!auctions) {
+      throw new NotFoundException('Auctions not found.');
+    }
+
+    return auctions;
   }
 }
