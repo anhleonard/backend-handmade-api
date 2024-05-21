@@ -31,7 +31,9 @@ export class CategoriesService {
         products: true,
       },
       relations: {
-        products: true,
+        products: {
+          store: true,
+        },
       },
     });
 

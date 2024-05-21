@@ -37,6 +37,13 @@ import { UpdateApproveProductDto } from './dto/update-approve-product.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  // ADMIN
+  @Get('/admin-filter-products')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  async filterAdminProducts(@Query() query: any) {
+    return await this.productsService.filterAdminProducts(query);
+  }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Post('/create')
   async create(
@@ -109,8 +116,8 @@ export class ProductsController {
   }
   // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   //bao gồm update category cho product
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Put('/update/:id')
   async update(
     @Param('id') id: string,
@@ -197,4 +204,6 @@ export class ProductsController {
   seeUploadedFile(@Param('path') path: string, @Res() res) {
     return res.sendFile(path, { root: './uploads/image' });
   }
+
+  // ----------------- ADMIN ------------------
 }

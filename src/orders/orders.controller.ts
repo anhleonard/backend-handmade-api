@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Put,
+  Query,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -25,6 +26,12 @@ import { OrderStatus } from './enums/order-status.enum';
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Get('/admin-filter-orders')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  async adminFilterOrders(@Query() query: any) {
+    return await this.ordersService.adminFilterOrders(query);
+  }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
   @Post('/create')

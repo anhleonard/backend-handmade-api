@@ -101,7 +101,11 @@ export class StoresService {
   }
 
   async getAllStores(): Promise<StoreEntity[]> {
-    return await this.storeRepository.find();
+    return await this.storeRepository.find({
+      relations: {
+        products: true,
+      },
+    });
   }
 
   async findStore(storeId: number): Promise<StoreEntity> {

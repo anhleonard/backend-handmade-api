@@ -185,13 +185,13 @@ export class ProductsService {
   async filterSellingProducts(query: any) {
     const builder = this.productRepository.createQueryBuilder('products');
 
-    builder.andWhere('products.status = :status', { status: 'SELLING' });
+    builder.where('products.status = :status', { status: 'SELLING' });
 
     if (query?.productName) {
       const name = query.productName.toLowerCase();
 
-      builder.where(
-        'LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName',
+      builder.andWhere(
+        '(LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName)',
         {
           productName: `%${name}%`,
         },
@@ -651,5 +651,72 @@ export class ProductsService {
     Object.assign(product, data);
 
     return await this.productRepository.save(product);
+  }
+
+  // ADMIN
+  async filterAdminProducts(query: any) {
+    //query: limit, productName, productCode, status
+    const builder = this.productRepository.createQueryBuilder('products');
+
+    if (query?.status) {
+      builder.andWhere('(products.status = :status)', {
+        status: query?.status,
+      });
+    }
+
+    if (query?.productCode) {
+      builder.andWhere('(products.productCode = :productCode)', {
+        productCode: query?.productCode,
+      });
+    }
+
+    if (query?.productName) {
+      const name = query.productName.toLowerCase();
+
+      builder.andWhere(
+        '(LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName)',
+        {
+          productName: `%${name}%`,
+        },
+      );
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    // CUSTOM PRODUCTS
+    const products = await builder.getMany();
+
+    const customProducts: ProductEntity[] = [];
+
+    for (let product of products) {
+      const foundProduct = await this.productRepository.findOne({
+        where: {
+          id: product.id,
+        },
+        relations: {
+          store: true,
+          category: true,
+          variants: {
+            variantItems: true,
+          },
+        },
+      });
+
+      customProducts.push(foundProduct);
+    }
+
+    return {
+      data: customProducts,
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
   }
 }

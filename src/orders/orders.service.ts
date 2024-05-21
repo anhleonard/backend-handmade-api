@@ -250,6 +250,7 @@ export class OrdersService {
 
     if (updateOrderDto.status === OrderStatus.SHIPPED) {
       order.shippedAt = new Date();
+      order.isPaid = true;
     }
 
     if (updateOrderDto.status === OrderStatus.DELIVERED) {
@@ -482,5 +483,67 @@ export class OrdersService {
 
     order.isReadyDelivery = true;
     return await this.orderRepository.save(order);
+  }
+
+  async adminFilterOrders(query: any) {
+    const builder = this.orderRepository.createQueryBuilder('orders');
+
+    if (query?.status) {
+      builder.andWhere('(orders.status = :status)', {
+        status: query?.status,
+      });
+    }
+
+    if (query?.code) {
+      builder.andWhere('(orders.code = :code)', {
+        code: query?.code,
+      });
+    }
+
+    if (query?.isReadyDelivery) {
+      builder.andWhere('(orders.isReadyDelivery = :isReadyDelivery)', {
+        isReadyDelivery: query?.isReadyDelivery,
+      });
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    // CUSTOM ORDERS
+    const orders = await builder.getMany();
+
+    const customOrders: OrderEntity[] = [];
+
+    for (let order of orders) {
+      const foundOrder = await this.orderRepository.findOne({
+        where: {
+          id: order.id,
+        },
+        relations: {
+          store: true,
+          client: true,
+          orderProducts: {
+            product: true,
+            variant: true,
+          },
+          updatedBy: true,
+        },
+      });
+
+      customOrders.push(foundOrder);
+    }
+
+    return {
+      data: customOrders,
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
   }
 }
