@@ -30,6 +30,12 @@ export class AuctionsController {
 
   /// --------------- auction ------------------- ///
 
+  @Get('/admin-filter-auctions/')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  async adminFilterAuctions(@Query() query: any) {
+    return await this.auctionsService.adminFilterAuctions(query);
+  }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
   @Post('/create')
   async create(

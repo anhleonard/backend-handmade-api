@@ -83,4 +83,7 @@ export class AuctionEntity {
 
   @OneToMany(() => BidderEntity, (bidder) => bidder.auction)
   candidates: BidderEntity[];
+
+  @ManyToOne(() => UserEntity, (user) => user.auctions)
+  canceledBy: UserEntity;
 }

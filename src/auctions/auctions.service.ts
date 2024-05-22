@@ -106,6 +106,14 @@ export class AuctionsService {
       auction.status = AuctionStatus.AUCTIONING;
     }
 
+    if (
+      updateAuctionDto.isAccepted === false &&
+      updateAuctionDto?.additionalComment
+    ) {
+      auction.status = AuctionStatus.CANCELED;
+      auction.canceledBy = currentUser;
+    }
+
     if (updateAuctionDto.maxAmount !== undefined) {
       auction.deposit = updateAuctionDto.maxAmount * 0.3;
     }
@@ -212,6 +220,8 @@ export class AuctionsService {
           user: true,
         },
         shipping: true,
+        owner: true,
+        canceledBy: true,
       },
     });
 
@@ -335,34 +345,53 @@ export class AuctionsService {
     auctionStatus: GetByAuctionStatus,
     currentUser: UserEntity,
   ) {
-    const whereCondition: any = {
-      owner: {
-        id: currentUser.id,
-      },
-    };
+    const builder = this.auctionRepository
+      .createQueryBuilder('auction')
+      .leftJoinAndSelect('auction.owner', 'owner')
+      .where('owner.id = :ownerId', { ownerId: currentUser.id });
 
-    if (auctionStatus?.status === null) {
-      whereCondition.isAccepted = false;
+    if (auctionStatus?.status !== undefined) {
+      let statusValue: string | null;
+
+      if (auctionStatus.status === null) {
+        statusValue = null;
+      } else {
+        statusValue = auctionStatus.status as string; // Explicitly cast to string
+      }
+
+      if (statusValue === null) {
+        builder.andWhere('auction.status IS NULL');
+      } else {
+        builder.andWhere('auction.status = :status', {
+          status: statusValue,
+        });
+      }
     }
 
-    if (auctionStatus?.status) {
-      whereCondition.status = auctionStatus.status;
-    }
-
-    const auctions = await this.auctionRepository.find({
-      where: whereCondition,
-      relations: {
-        owner: true,
-        candidates: true,
-        progresses: true,
-      },
-    });
+    const auctions = await builder.getMany();
 
     if (!auctions) {
       throw new NotFoundException('Auctions not found.');
     }
 
-    return auctions;
+    let customAuctions: AuctionEntity[] = [];
+
+    for (let auction of auctions) {
+      const foundAuction = await this.auctionRepository.findOne({
+        where: {
+          id: auction.id,
+        },
+        relations: {
+          owner: true,
+          candidates: true,
+          progresses: true,
+        },
+      });
+
+      customAuctions.push(foundAuction);
+    }
+
+    return customAuctions;
   }
 
   async findAllSellerAuctions(
@@ -451,5 +480,75 @@ export class AuctionsService {
     progress.updatedAt = new Date();
 
     return await this.progressRepository.save(progress);
+  }
+
+  async adminFilterAuctions(query: any) {
+    const builder = this.auctionRepository.createQueryBuilder('auctions');
+
+    //filter theo status
+    if (query?.status !== undefined) {
+      const statusValue = query.status === 'null' ? null : query.status;
+
+      if (statusValue === null) {
+        builder.andWhere('(auctions.status IS NULL)');
+      } else {
+        builder.andWhere('(auctions.status = :status)', {
+          status: statusValue,
+        });
+      }
+    }
+
+    //filter theo auction name
+    if (query?.auctionName) {
+      const name = query.auctionName.toLowerCase();
+      builder.andWhere(
+        '(LOWER(auctions.name) LIKE :auctionName OR LOWER(auctions.description) LIKE :auctionName)',
+        { auctionName: `%${name}%` },
+      );
+    }
+
+    if (query?.readyToLaunch) {
+      builder.andWhere('(auctions.readyToLaunch = :readyToLaunch)', {
+        readyToLaunch: query?.readyToLaunch,
+      });
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    const auctions = await builder.getMany();
+
+    const customAuctions: AuctionEntity[] = [];
+
+    for (let auction of auctions) {
+      const foundAuction = await this.auctionRepository.findOne({
+        where: {
+          id: auction.id,
+        },
+        relations: {
+          owner: true,
+          candidates: {
+            store: true,
+          },
+          progresses: true,
+          canceledBy: true,
+        },
+      });
+
+      customAuctions.push(foundAuction);
+    }
+
+    return {
+      data: customAuctions,
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
   }
 }
