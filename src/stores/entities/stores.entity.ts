@@ -17,6 +17,7 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from 'typeorm';
+import { StoreStatus } from '../enum/stores.enum';
 
 @Entity({ name: 'stores' })
 export class StoreEntity {
@@ -58,6 +59,9 @@ export class StoreEntity {
 
   @Column({ default: 0 })
   canceledRate: number;
+
+  @Column({ default: StoreStatus.INACTIVE })
+  status: StoreStatus;
 
   @OneToOne(() => UserEntity, (user) => user.store)
   @JoinColumn()

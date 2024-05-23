@@ -125,4 +125,57 @@ export class StoresService {
 
     return store;
   }
+
+  async adminFilterStores(query: any) {
+    const builder = this.storeRepository.createQueryBuilder('stores');
+
+    //filter theo status
+    if (query?.status) {
+      builder.andWhere('(stores.status = :status)', {
+        status: query.status,
+      });
+    }
+
+    //filter theo auction name
+    if (query?.storeName) {
+      const name = query.storeName.toLowerCase();
+      builder.andWhere(
+        '(LOWER(stores.name) LIKE :storeName OR LOWER(stores.description) LIKE :storeName)',
+        { storeName: `%${name}%` },
+      );
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    const stores = await builder.getMany();
+
+    const customStores: StoreEntity[] = [];
+
+    for (let store of stores) {
+      const foundStore = await this.storeRepository.findOne({
+        where: {
+          id: store.id,
+        },
+        relations: {
+          owner: true,
+        },
+      });
+
+      customStores.push(foundStore);
+    }
+
+    return {
+      data: customStores,
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
+  }
 }

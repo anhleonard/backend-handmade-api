@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { StoresService } from './stores.service';
@@ -19,6 +20,12 @@ import { UpdateStoreDto } from './dto/update-store.dto';
 @Controller('stores')
 export class StoresController {
   constructor(private readonly storesService: StoresService) {}
+
+  @Get('/admin-filter-stores')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  async adminFilterStores(@Query() query: any) {
+    return await this.storesService.adminFilterStores(query);
+  }
 
   @Post('/create')
   async create(@Body() createStoreDto: CreateStoreDto) {
