@@ -19,14 +19,20 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { TokenEntity } from 'src/tokens/entities/token.entity';
+import { TokensService } from 'src/tokens/tokens.service';
+import { Roles } from 'src/utility/common/user-roles.enum';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UserEntity)
     private usersRepository: Repository<UserEntity>,
+    @InjectRepository(TokenEntity)
+    private tokensRepository: Repository<TokenEntity>,
     private mailService: MailerService,
     private jwtService: JwtService,
+    private tokensService: TokensService,
   ) {}
 
   async signup(userSignUpDto: UserSignUpDto): Promise<UserEntity> {
@@ -36,6 +42,17 @@ export class UsersService {
     let user = this.usersRepository.create(userSignUpDto);
     user = await this.usersRepository.save(user);
     delete user.password;
+
+    if (user.role === Roles.SELLER) {
+      //send email to xác thực email
+      const randomToken = await this.tokensService.randomToken();
+      await this.sendAuthenEmail(
+        userSignUpDto.email,
+        randomToken.token,
+        user.id,
+      );
+    }
+
     return user;
   }
 
@@ -116,6 +133,30 @@ export class UsersService {
         html:
           '<h1>Reset Password</h1> <h2>Welcome</h2><p>To reset your password, please click on this link</p><a href=http://localhost:3000/reset-password/' +
           token +
+          '>Click this </a>',
+      });
+
+      if (!mail) {
+        throw new BadRequestException('An error occurred while sending mail');
+      }
+
+      return mail;
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async sendAuthenEmail(toEmail: string, token: string, sellerId: number) {
+    try {
+      const mail = await this.mailService.sendMail({
+        to: toEmail,
+        from: 'support@example.com',
+        subject: 'Verify Email & Setup Store',
+        html:
+          '<h1>Verify Email & Setup Store</h1> <h2>Welcome</h2><p>To verify email and setup store, please click on this link</p><a href=http://localhost:3000/auth/uploads/' +
+          token +
+          '/' +
+          sellerId +
           '>Click this </a>',
       });
 

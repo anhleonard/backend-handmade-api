@@ -1,6 +1,10 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateStoreDto {
+  @IsNotEmpty({ message: 'seller id is not empty' })
+  @IsNumber()
+  sellerId: number;
+
   @IsNotEmpty({ message: 'store name is not empty' })
   @IsString()
   name: string;
@@ -16,4 +20,12 @@ export class CreateStoreDto {
   @IsNotEmpty({ message: 'store main business is not empty' })
   @IsString()
   mainBusiness: string;
+
+  @IsNotEmpty({ message: 'frontCard is not empty' })
+  @IsString()
+  frontCard: string;
+
+  @IsNotEmpty({ message: 'backCard is not empty' })
+  @IsString()
+  backCard: string;
 }

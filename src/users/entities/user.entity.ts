@@ -60,6 +60,15 @@ export class UserEntity {
   @UpdateDateColumn()
   updatedAt: Timestamp;
 
+  @Column({ default: false })
+  hasStore: boolean;
+
+  @Column({ nullable: true })
+  frontCard: string;
+
+  @Column({ nullable: true })
+  backCard: string;
+
   @OneToMany(() => CategoryEntity, (cat) => cat.addedBy)
   categories: CategoryEntity[];
 

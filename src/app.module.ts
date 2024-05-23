@@ -19,6 +19,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { AuctionsModule } from './auctions/auctions.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { PaymentModule } from './payment/payment.module';
+import { TokensModule } from './tokens/tokens.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { join } from 'path';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
     }),
+    PaymentModule,
+    TokensModule,
   ],
   controllers: [],
   providers: [],

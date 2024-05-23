@@ -5,10 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { TokenEntity } from 'src/tokens/entities/token.entity';
+import { TokensModule } from 'src/tokens/tokens.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, TokenEntity]),
     JwtModule,
     MailerModule.forRoot({
       transport: {
@@ -20,6 +22,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
         },
       },
     }),
+    TokensModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

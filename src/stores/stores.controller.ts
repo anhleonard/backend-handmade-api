@@ -20,13 +20,9 @@ import { UpdateStoreDto } from './dto/update-store.dto';
 export class StoresController {
   constructor(private readonly storesService: StoresService) {}
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Post('/create')
-  async create(
-    @Body() createStoreDto: CreateStoreDto,
-    @CurrentUser() currentUser: UserEntity,
-  ) {
-    return await this.storesService.create(createStoreDto, currentUser);
+  async create(@Body() createStoreDto: CreateStoreDto) {
+    return await this.storesService.create(createStoreDto);
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))

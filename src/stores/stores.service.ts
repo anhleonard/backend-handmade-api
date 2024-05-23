@@ -19,14 +19,11 @@ export class StoresService {
     private readonly userRepository: Repository<UserEntity>,
   ) {}
 
-  async create(
-    createStoreDto: CreateStoreDto,
-    currentUser: UserEntity,
-  ): Promise<StoreEntity> {
+  async create(createStoreDto: CreateStoreDto): Promise<StoreEntity> {
     try {
       const seller = await this.userRepository.findOne({
         where: {
-          id: currentUser.id,
+          id: createStoreDto.sellerId,
         },
         relations: {
           store: true,
@@ -48,10 +45,14 @@ export class StoresService {
       }
 
       let createdStore = this.storeRepository.create(createStoreDto);
+      createdStore.owner = seller;
 
-      createdStore.owner = currentUser;
+      seller.hasStore = true;
+      seller.frontCard = createStoreDto.frontCard;
+      seller.backCard = createStoreDto.backCard;
 
-      return await this.storeRepository.save(createdStore);
+      await this.userRepository.save(seller); //save thông tin seller sau khi đã tạo store
+      return await this.storeRepository.save(createdStore); //save thông tin store
     } catch (e) {
       throw new BadRequestException(e.message);
     }
