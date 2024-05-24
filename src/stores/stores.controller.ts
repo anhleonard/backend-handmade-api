@@ -47,6 +47,16 @@ export class StoresController {
     return await this.storesService.getAllStores();
   }
 
+  //update store status by admin like banned, active, inactive
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  @Put('/update-store/:id')
+  async updateStore(
+    @Param('id') id: string,
+    @Body() updateStoreDto: UpdateStoreDto,
+  ) {
+    return await this.storesService.updateStore(+id, updateStoreDto);
+  }
+
   @Get('/:id')
   async findStore(@Param('id') id: string) {
     return await this.storesService.findStore(+id);

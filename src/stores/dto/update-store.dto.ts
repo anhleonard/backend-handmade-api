@@ -1,4 +1,5 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { StoreStatus } from '../enum/stores.enum';
 
 export class UpdateStoreDto {
   @IsOptional()
@@ -16,4 +17,16 @@ export class UpdateStoreDto {
   @IsOptional()
   @IsString()
   mainBusiness: string;
+
+  @IsOptional()
+  @IsEnum(StoreStatus)
+  status: StoreStatus;
+
+  @IsOptional()
+  @IsString()
+  bannedReason: string;
+
+  @IsOptional()
+  @IsString()
+  notApproveReason: string;
 }

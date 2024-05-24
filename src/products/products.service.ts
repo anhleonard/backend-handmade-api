@@ -719,4 +719,84 @@ export class ProductsService {
       last_page: Math.ceil(total / perPage),
     };
   }
+
+  async getStoreProducts(storeId: number, query: any) {
+    const builder = this.productRepository.createQueryBuilder('products');
+
+    builder.where('products.status = :status', { status: 'SELLING' });
+
+    builder
+      .leftJoinAndSelect('products.store', 'store')
+      .andWhere('store.id = :id', { id: storeId });
+
+    if (query?.productName) {
+      const name = query.productName.toLowerCase();
+
+      builder.andWhere(
+        '(LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName)',
+        {
+          productName: `%${name}%`,
+        },
+      );
+    }
+
+    //lọc theo sắp xếp
+    const sort: any = query?.sort;
+
+    if (sort === 'BEST_RATING') {
+      builder.orderBy('CAST(products.averageRating AS FLOAT)', 'DESC');
+    } else if (sort === 'PRICE_LOW_HIGH') {
+      builder.orderBy('CAST(products.price AS INT)', 'ASC');
+    } else if (sort === 'PRICE_HIGH_LOW') {
+      builder.orderBy('CAST(products.price AS INT)', 'DESC');
+    } else if (sort === 'NEWEST') {
+      builder.orderBy('products.createdAt', 'DESC');
+    } else if (sort === 'MOST_POPULAR') {
+      builder.orderBy('products.soldNumber', 'DESC');
+    }
+
+    // Lọc theo khoảng giá khi price là chuỗi
+    if (query?.minPrice && query?.maxPrice) {
+      builder.andWhere(
+        'CAST(products.price AS FLOAT) BETWEEN :minPrice AND :maxPrice',
+        {
+          minPrice: query.minPrice,
+          maxPrice: query.maxPrice,
+        },
+      );
+    } else if (query?.minPrice) {
+      builder.andWhere('CAST(products.price AS FLOAT) >= :minPrice', {
+        minPrice: query.minPrice,
+      });
+    } else if (query?.maxPrice) {
+      builder.andWhere('CAST(products.price AS FLOAT) <= :maxPrice', {
+        maxPrice: query.maxPrice,
+      });
+    }
+
+    // filter by discount
+    if (query?.discount) {
+      if (parseInt(query?.discount) == 1) {
+        builder.andWhere('products.discount > 0');
+      }
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    const products = await builder.getMany();
+
+    return {
+      data: products,
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
+  }
 }

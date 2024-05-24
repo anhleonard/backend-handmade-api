@@ -116,6 +116,8 @@ export class StoresService {
       },
       relations: {
         products: true,
+        owner: true,
+        orders: true,
       },
     });
 
@@ -165,6 +167,8 @@ export class StoresService {
         },
         relations: {
           owner: true,
+          orders: true,
+          products: true,
         },
       });
 
@@ -177,5 +181,21 @@ export class StoresService {
       page,
       last_page: Math.ceil(total / perPage),
     };
+  }
+
+  async updateStore(storeId: number, updateStoreDto: UpdateStoreDto) {
+    const store = await this.storeRepository.findOne({
+      where: {
+        id: storeId,
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    Object.assign(store, updateStoreDto);
+
+    return await this.storeRepository.save(store);
   }
 }

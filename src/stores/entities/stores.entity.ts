@@ -30,9 +30,6 @@ export class StoreEntity {
   @Column()
   avatar: string;
 
-  @Column({ default: false })
-  isBanned: boolean;
-
   @Column()
   description: string;
 
@@ -59,6 +56,12 @@ export class StoreEntity {
 
   @Column({ default: 0 })
   canceledRate: number;
+
+  @Column({ nullable: true })
+  bannedReason: string; //lý do cấm store
+
+  @Column({ nullable: true })
+  notApproveReason: string; //lý do không duyệt store
 
   @Column({ default: StoreStatus.INACTIVE })
   status: StoreStatus;

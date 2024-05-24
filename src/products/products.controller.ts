@@ -44,6 +44,14 @@ export class ProductsController {
     return await this.productsService.filterAdminProducts(query);
   }
 
+  @Get('/filter-store-products/:storeId')
+  async getStoreProducts(
+    @Param('storeId') storeId: string,
+    @Query() query: any,
+  ) {
+    return await this.productsService.getStoreProducts(+storeId, query);
+  }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Post('/create')
   async create(
