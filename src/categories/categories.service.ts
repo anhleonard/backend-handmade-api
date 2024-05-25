@@ -29,6 +29,7 @@ export class CategoriesService {
         title: true,
         description: true,
         products: true,
+        image: true,
       },
       relations: {
         products: {

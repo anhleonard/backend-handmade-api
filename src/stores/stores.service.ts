@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { StoreEntity } from './entities/stores.entity';
 import { Repository } from 'typeorm';
 import { UpdateStoreDto } from './dto/update-store.dto';
+import { ProductStatus } from 'src/products/enum/product.enum';
 
 @Injectable()
 export class StoresService {
@@ -118,6 +119,9 @@ export class StoresService {
         products: true,
         owner: true,
         orders: true,
+        collections: {
+          products: true,
+        },
       },
     });
 
@@ -197,5 +201,31 @@ export class StoresService {
     Object.assign(store, updateStoreDto);
 
     return await this.storeRepository.save(store);
+  }
+
+  async allStoreProducts(currentUser: UserEntity) {
+    const store = await this.storeRepository.findOne({
+      where: {
+        owner: {
+          id: currentUser.id,
+        },
+      },
+      relations: {
+        owner: true,
+        products: true,
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    const allProducts = store?.products;
+
+    const filteredProducts = allProducts?.filter(
+      (item) => item.status === ProductStatus.SELLING,
+    );
+
+    return filteredProducts;
   }
 }

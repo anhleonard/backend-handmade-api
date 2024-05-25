@@ -24,6 +24,9 @@ export class CategoryEntity {
   @Column()
   description: string;
 
+  @Column({ nullable: true })
+  image: string;
+
   @CreateDateColumn()
   createdAt: Timestamp;
 

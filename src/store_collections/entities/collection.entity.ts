@@ -4,6 +4,8 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import {
   Column,
   Entity,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
@@ -20,9 +22,7 @@ export class CollectionEntity {
   @ManyToOne(() => StoreEntity, (store) => store.collections)
   store: StoreEntity;
 
-  @OneToMany(() => ProductEntity, (product) => product.collection, {
-    onDelete: 'SET NULL',
-    cascade: true,
-  })
+  @ManyToMany(() => ProductEntity, (product) => product.collections)
+  @JoinTable({ name: 'products_collections' })
   products: ProductEntity[];
 }

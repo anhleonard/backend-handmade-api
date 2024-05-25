@@ -266,7 +266,7 @@ export class ProductsService {
             variantCategory: true,
           },
         },
-        collection: true,
+        collections: true,
         store: true,
       },
       select: {

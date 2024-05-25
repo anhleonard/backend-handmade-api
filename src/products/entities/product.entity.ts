@@ -122,10 +122,8 @@ export class ProductEntity {
   @ManyToOne(() => StoreEntity, (store) => store.products)
   store: StoreEntity;
 
-  @ManyToOne(() => CollectionEntity, (collection) => collection.products, {
-    onDelete: 'SET NULL',
-  })
-  collection: CollectionEntity;
+  @ManyToMany(() => CollectionEntity, (collection) => collection.products)
+  collections: CollectionEntity[];
 
   @ManyToMany(() => VariantCategoryEntity, (cate) => cate.products)
   variantCategories: VariantCategoryEntity[];

@@ -11,4 +11,9 @@ export class CreateCategoryDto {
   @IsNotEmpty({ message: 'description can not be empty.' })
   @IsString({ message: 'description should be string.' })
   description: string;
+
+  @ApiProperty()
+  @IsNotEmpty({ message: 'image can not be empty.' })
+  @IsString({ message: 'image should be string.' })
+  image: string;
 }

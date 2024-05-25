@@ -48,10 +48,23 @@ export class StoreCollectionsController {
     );
   }
 
+  @Get('/:collectId')
+  async findOne(@Param('collectId') collectId: string) {
+    return await this.collectionsService.findOne(+collectId);
+  }
+
   @UseGuards(AuthenticationGuard)
-  @Get('/')
-  async getStoreCollections(@Query('storeId') storeId: string) {
-    return await this.collectionsService.getStoreCollections(+storeId);
+  @Get('/seller/:sellerId')
+  async getStoreCollections(
+    @Param('sellerId') sellerId: string,
+    @Query() query: any,
+  ) {
+    return await this.collectionsService.getStoreCollections(+sellerId, query);
+  }
+
+  @Get('/store/:storeId')
+  async getAllStoreCollections(@Param('storeId') storeId: string) {
+    return await this.collectionsService.getAllStoreCollections(+storeId);
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))

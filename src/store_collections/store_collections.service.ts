@@ -62,27 +62,17 @@ export class StoreCollectionsService {
 
     const productIds = createCollectionDto.collectionProductIds;
 
-    let productsNotInCollection: ProductEntity[] = [];
+    let filteredProducts: ProductEntity[] = [];
 
     for (let productId of productIds) {
       const productOfStore = await this.productRepository.findOne({
         where: {
           id: productId,
-          addedBy: {
-            id: currentUser.id,
-          },
-        },
-        relations: {
-          addedBy: true,
         },
       });
 
       if (productOfStore) {
-        if (productOfStore?.collection) {
-          console.log('product in collection', productId);
-        } else {
-          productsNotInCollection.push(productOfStore);
-        }
+        filteredProducts.push(productOfStore);
       }
     }
 
@@ -90,7 +80,7 @@ export class StoreCollectionsService {
 
     collection.store = seller.store;
 
-    collection.products = productsNotInCollection;
+    collection.products = filteredProducts;
 
     return await this.collectionRepository.save(collection);
   }
@@ -114,23 +104,6 @@ export class StoreCollectionsService {
       throw new BadRequestException('This seller has no store.');
     }
 
-    //check collection này có trong store chưa // check theo name
-    const itemCollection = await this.collectionRepository.findOne({
-      where: {
-        name: updateCollectionDto.name,
-        store: {
-          id: seller.store.id,
-        },
-      },
-      relations: {
-        store: true,
-      },
-    });
-
-    if (itemCollection) {
-      throw new BadRequestException('This collection is available in store.');
-    }
-
     //find collection by id of this store
     let collection = await this.collectionRepository.findOne({
       where: {
@@ -149,60 +122,67 @@ export class StoreCollectionsService {
       throw new NotFoundException('Collection not found in this store by id');
     }
 
-    if (!collection.products) {
-      throw new NotFoundException('Collection has no product');
-    }
+    Object.assign(collection, updateCollectionDto);
 
-    let productsOfStoreNotInCollection: ProductEntity[] = [];
+    let filteredProducts: ProductEntity[] = [];
 
     for (let productId of updateCollectionDto.collectionProductIds) {
       const productOfStore = await this.productRepository.findOne({
         where: {
           id: productId,
-          addedBy: {
-            id: currentUser.id,
-          },
-        },
-        relations: {
-          addedBy: true,
-          collection: true,
         },
       });
 
       //product of store not in collection
-      if (productOfStore && productOfStore?.collection == null) {
-        productsOfStoreNotInCollection.push(productOfStore);
+      if (productOfStore) {
+        filteredProducts.push(productOfStore);
       }
     }
 
-    //combine products to put into collection
-    const finalProducts = collection.products.concat(
-      productsOfStoreNotInCollection,
-    );
-
-    collection.products = finalProducts;
+    collection.products = filteredProducts;
 
     return await this.collectionRepository.save(collection);
   }
 
-  async getStoreCollections(storeId: number) {
-    const collections = await this.collectionRepository.findOne({
-      where: {
-        store: {
-          id: storeId,
-        },
-      },
-      relations: {
-        store: true,
-        products: true,
-      },
-    });
+  async getStoreCollections(sellerId: number, query: any) {
+    const builder = this.collectionRepository.createQueryBuilder('collections');
+
+    builder
+      .leftJoinAndSelect('collections.store', 'store')
+      .leftJoinAndSelect('store.owner', 'owner')
+      .where('owner.id = :id', { id: sellerId });
+
+    if (query?.title) {
+      const name = query.title.toLowerCase();
+
+      builder.andWhere('LOWER(collections.name) LIKE :title', {
+        title: `%${name}%`,
+      });
+    }
+
+    const collections = await builder.getMany();
 
     if (!collections) {
       throw new NotFoundException('Collection of store not found');
     }
 
-    return collections;
+    let customCollections: CollectionEntity[] = [];
+
+    for (let collection of collections) {
+      const foundCollection = await this.collectionRepository.findOne({
+        where: {
+          id: collection.id,
+        },
+        relations: {
+          store: true,
+          products: true,
+        },
+      });
+
+      customCollections.push(foundCollection);
+    }
+
+    return customCollections;
   }
 
   async removeProductInCollection(collectionId: number, productId: number) {
@@ -226,12 +206,12 @@ export class StoreCollectionsService {
     const productInCollect = await this.productRepository.findOne({
       where: {
         id: productId,
-        collection: {
+        collections: {
           id: collectionId,
         },
       },
       relations: {
-        collection: true,
+        collections: true,
       },
     });
 
@@ -258,5 +238,43 @@ export class StoreCollectionsService {
     });
 
     return await this.collectionRepository.remove(collection);
+  }
+
+  async findOne(id: number) {
+    const collection = await this.collectionRepository.findOne({
+      where: {
+        id,
+      },
+      relations: {
+        store: true,
+        products: true,
+      },
+    });
+
+    if (!collection) {
+      throw new NotFoundException('Collection not found');
+    }
+
+    return collection;
+  }
+
+  async getAllStoreCollections(storeId: number) {
+    const collections = await this.collectionRepository.find({
+      where: {
+        store: {
+          id: storeId,
+        },
+      },
+      relations: {
+        store: true,
+        products: true,
+      },
+    });
+
+    if (!collections) {
+      throw new NotFoundException('Collection not found');
+    }
+
+    return collections;
   }
 }

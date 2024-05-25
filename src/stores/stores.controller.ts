@@ -61,4 +61,11 @@ export class StoresController {
   async findStore(@Param('id') id: string) {
     return await this.storesService.findStore(+id);
   }
+
+  // store selling products with no filter: status = selling
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/all-store-products')
+  async allStoreProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.storesService.allStoreProducts(currentUser);
+  }
 }
