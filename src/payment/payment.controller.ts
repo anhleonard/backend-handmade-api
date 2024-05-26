@@ -29,4 +29,9 @@ export class PaymentController {
   async checkOrderStatus(@Param('id') id: string) {
     return this.paymentService.checkOrderStatus(id);
   }
+
+  @Post('/refund')
+  async refund() {
+    return this.paymentService.refund();
+  }
 }

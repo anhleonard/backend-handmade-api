@@ -24,8 +24,4 @@ export class CreateOrderDto {
   @IsNotEmpty({ message: 'isPaid is not empty.' })
   @IsBoolean()
   isPaid: boolean;
-
-  // @IsOptional()
-  // @IsEnum(OrderStatus)
-  // status: OrderStatus;
 }

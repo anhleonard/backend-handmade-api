@@ -107,4 +107,9 @@ export class OrdersController {
   ) {
     return await this.ordersService.updateReadyForAdmin(+id, currentUser);
   }
+
+  @Delete('/delete/:id')
+  async deleteOrder(@Param('id') id: string) {
+    return await this.ordersService.deleteOrder(+id);
+  }
 }

@@ -74,7 +74,9 @@ export class OrderEntity {
   @Column({ nullable: true })
   deliveredAt: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.ordersUpdateBy)
+  @ManyToOne(() => UserEntity, (user) => user.ordersUpdateBy, {
+    onDelete: 'SET NULL',
+  })
   updatedBy: UserEntity;
 
   @ManyToOne(() => ShippingEntity, (ship) => ship.order, {
@@ -89,9 +91,13 @@ export class OrderEntity {
   @JoinTable({ name: 'orders_order_products' })
   orderProducts: OrderProductEntity[];
 
-  @ManyToOne(() => UserEntity, (user) => user.orders)
+  @ManyToOne(() => UserEntity, (user) => user.orders, {
+    onDelete: 'SET NULL',
+  })
   client: UserEntity;
 
-  @ManyToOne(() => StoreEntity, (store) => store.orders)
+  @ManyToOne(() => StoreEntity, (store) => store.orders, {
+    onDelete: 'SET NULL',
+  })
   store: StoreEntity;
 }

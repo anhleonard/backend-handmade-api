@@ -153,6 +153,14 @@ export class OrdersService {
 
     orderEntity.code = this.generateRandomOrderCode(14);
 
+    if (createOrderDto.isPaid) {
+      orderEntity.isPaid = true;
+      orderEntity.status = OrderStatus.PROCESSING;
+    } else {
+      orderEntity.isPaid = false;
+      orderEntity.status = OrderStatus.WAITING_PAYMENT;
+    }
+
     return await this.orderRepository.save(orderEntity);
   }
 
@@ -549,5 +557,19 @@ export class OrdersService {
       page,
       last_page: Math.ceil(total / perPage),
     };
+  }
+
+  async deleteOrder(id: number) {
+    const order = await this.orderRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    return await this.orderRepository.remove(order);
   }
 }

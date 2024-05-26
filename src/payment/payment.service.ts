@@ -31,7 +31,7 @@ export class PaymentService {
 
     const embed_data = {
       redirecturl:
-        'https://1744-2405-4802-1c94-8160-94b-b4ae-c0e9-43e3.ngrok-free.app/complete-order',
+        'https://7288-2405-4802-1c94-8160-94b-b4ae-c0e9-43e3.ngrok-free.app/complete-order',
     };
 
     const items = [{}]; // add items to order
@@ -147,7 +147,6 @@ export class PaymentService {
       let reqMac = body.mac;
 
       let mac = CryptoJS.HmacSHA256(dataStr, config.key2).toString();
-      console.log('mac =', mac);
 
       // kiểm tra callback hợp lệ (đến từ ZaloPay server)
       if (reqMac !== mac) {
@@ -172,7 +171,7 @@ export class PaymentService {
     }
 
     // thông báo kết quả cho ZaloPay server
-    console.log(result);
+    return result;
   }
 
   async checkOrderStatus(id: string) {
@@ -207,6 +206,51 @@ export class PaymentService {
 
     try {
       const res = await axios(postConfig);
+      if (res) {
+        return res.data;
+      }
+    } catch (error) {
+      return error.message;
+    }
+  }
+
+  async refund() {
+    // APP INFO
+    const config = {
+      appid: '2554',
+      key1: 'sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn',
+      key2: 'trMrHtvjo6myautxDUiAcYsVtaeQ8nhf',
+      refund_url: 'https://sb-openapi.zalopay.vn/v2/refund',
+    };
+
+    const timestamp = Date.now();
+    const uid = `${timestamp}${Math.floor(111 + Math.random() * 999)}`; // unique id
+
+    let params = {
+      app_id: config.appid,
+      m_refund_id: `${moment().format('YYMMDD')}_${config.appid}_${uid}`,
+      timestamp, // miliseconds
+      zp_trans_id: '240527000000206',
+      amount: '50000',
+      description: 'ZaloPay Refund Demo',
+      mac: '',
+    };
+
+    // app_id|zp_trans_id|amount|description|timestamp
+    let data =
+      params.app_id +
+      '|' +
+      params.zp_trans_id +
+      '|' +
+      params.amount +
+      '|' +
+      params.description +
+      '|' +
+      params.timestamp;
+    params.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
+
+    try {
+      const res = await axios.post(config.refund_url, null, { params });
       if (res) {
         return res.data;
       }
