@@ -18,6 +18,8 @@ import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { OrderProductEntity } from '../order_products/entities/order-products.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { CancelOrderDto } from './dto/cancel-order.dto';
+import { PaymentService } from 'src/payment/payment.service';
+import { CreatePaymentDto } from 'src/payment/dto/create-payment.dto';
 
 @Injectable()
 export class OrdersService {
@@ -34,6 +36,8 @@ export class OrdersService {
     private readonly variantRepository: Repository<VariantEntity>,
     @Inject(forwardRef(() => ProductsService))
     private readonly productService: ProductsService,
+    @Inject(forwardRef(() => PaymentService))
+    private readonly paymentService: PaymentService,
   ) {}
   async create(createOrderDto: CreateOrderDto, currentUser: UserEntity) {
     const shippingEntity = await this.shippingRepository.findOne({

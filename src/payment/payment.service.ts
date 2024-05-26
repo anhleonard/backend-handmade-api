@@ -1,12 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
 import * as CryptoJS from 'crypto-js';
 import axios from 'axios';
 import * as qs from 'qs';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { OrderProductEntity } from 'src/order_products/entities/order-products.entity';
+import { Repository } from 'typeorm';
+import { UserEntity } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class PaymentService {
-  async payment() {
+  constructor(
+    @InjectRepository(OrderProductEntity)
+    private readonly opRepository: Repository<OrderProductEntity>,
+  ) {}
+  async payment(createPaymentDto: CreatePaymentDto, user: UserEntity) {
+    const { totalPayment, currentUser } = await this.filteredOrder(
+      createPaymentDto,
+      user,
+    );
+
     // APP INFO
     const config = {
       app_id: '2554',
@@ -16,24 +30,25 @@ export class PaymentService {
     };
 
     const embed_data = {
-      redirecturl: 'https://www.google.com',
+      redirecturl:
+        'https://1744-2405-4802-1c94-8160-94b-b4ae-c0e9-43e3.ngrok-free.app/complete-order',
     };
 
-    const items = [{}];
+    const items = [{}]; // add items to order
     const transID = Math.floor(Math.random() * 1000000);
     const order = {
       app_id: config.app_id,
       app_trans_id: `${moment().format('YYMMDD')}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
-      app_user: 'user123',
+      app_user: currentUser.name, // change user name
       app_time: Date.now(), // miliseconds
       item: JSON.stringify(items),
       embed_data: JSON.stringify(embed_data),
-      amount: 50000,
-      description: `Lazada - Payment for the order #${transID}`,
+      amount: totalPayment, // change total payment
+      description: `Handmade - Payment for the order #${transID}`,
       bank_code: '',
       mac: '',
-      callback_url:
-        'https://aad5-118-70-129-28.ngrok-free.app/payment/callback',
+      // callback_url:
+      //   'https://aad5-118-70-129-28.ngrok-free.app/payment/callback',
     };
 
     // appid|app_trans_id|appuser|amount|apptime|embeddata|item
@@ -59,8 +74,61 @@ export class PaymentService {
         return res.data;
       }
     } catch (error) {
-      return error.message;
+      throw new BadRequestException(error.message);
     }
+  }
+
+  //lọc thông tin của order
+  async filteredOrder(
+    createPaymentDto: CreatePaymentDto,
+    currentUser: UserEntity,
+  ) {
+    let orderProducts = [];
+    let provisionalAmount = 0;
+    let discountAmount = 0;
+    let totalPayment = 0;
+
+    for (let id of createPaymentDto.orderedProductIds) {
+      const orderProduct = await this.opRepository.findOne({
+        where: {
+          id,
+          isSelected: true,
+          client: {
+            id: currentUser.id,
+          },
+        },
+        relations: {
+          client: true,
+          product: {
+            store: true,
+          },
+          variant: true,
+        },
+      });
+
+      if (!orderProduct) {
+        break;
+      }
+
+      //tạm tính tiền
+      provisionalAmount +=
+        orderProduct.productUnitPrice * orderProduct.productQuantity;
+
+      orderProducts.push(orderProduct);
+    }
+
+    //tính tổng tiền sau giảm + phí giao hàng
+    totalPayment =
+      provisionalAmount - discountAmount + createPaymentDto?.deliveryFee;
+
+    if (orderProducts.length === 0) {
+      throw new BadRequestException('No item can be sold.');
+    }
+
+    return {
+      totalPayment,
+      currentUser,
+    };
   }
 
   async callback(body: any) {

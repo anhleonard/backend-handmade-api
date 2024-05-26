@@ -1,4 +1,12 @@
-import { IsArray, IsNotEmpty, IsNumber } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
+import { OrderStatus } from '../enums/order-status.enum';
 
 export class CreateOrderDto {
   @IsNotEmpty({ message: 'shippingAddressId is not empty.' })
@@ -12,4 +20,12 @@ export class CreateOrderDto {
   @IsNotEmpty({ message: 'deliveryFee is not empty.' })
   @IsNumber()
   deliveryFee: number;
+
+  @IsNotEmpty({ message: 'isPaid is not empty.' })
+  @IsBoolean()
+  isPaid: boolean;
+
+  // @IsOptional()
+  // @IsEnum(OrderStatus)
+  // status: OrderStatus;
 }
