@@ -32,6 +32,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { storageConfig } from 'helpers/config';
 import { UpdateApproveProductDto } from './dto/update-approve-product.dto';
+import { UpdateFavouriteProducts } from './dto/update-favourite-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -160,19 +161,19 @@ export class ProductsController {
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
   @Put('/update-favourite-products')
   async updateFavouriteProducts(
-    @Body('productId') productId: string,
+    @Body() updateFavouriteProducts: UpdateFavouriteProducts,
     @CurrentUser() currentUser: UserEntity,
   ) {
     return await this.productsService.updateFavouriteProducts(
-      +productId,
+      updateFavouriteProducts,
       currentUser,
     );
   }
 
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
   @Post('/favourite-products')
-  async getFavouriteProducts(@Body('userId') userId: string) {
-    return await this.productsService.getFavouriteProducts(+userId);
+  async getFavouriteProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.productsService.getFavouriteProducts(currentUser);
   }
 
   @Post('/upload-image')

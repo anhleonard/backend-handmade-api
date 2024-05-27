@@ -23,6 +23,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { ProductStatus } from './enum/product.enum';
 import { UpdateApproveProductDto } from './dto/update-approve-product.dto';
+import { UpdateFavouriteProducts } from './dto/update-favourite-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -545,7 +546,7 @@ export class ProductsService {
 
   // favourite products
   async updateFavouriteProducts(
-    productId: number,
+    updateFavouriteProducts: UpdateFavouriteProducts,
     currentUser: UserEntity,
   ): Promise<UserEntity> {
     try {
@@ -566,7 +567,7 @@ export class ProductsService {
 
       const product = await this.productRepository.findOne({
         where: {
-          id: productId,
+          id: updateFavouriteProducts.productId,
         },
       });
 
@@ -574,7 +575,15 @@ export class ProductsService {
         throw new NotFoundException('Product not exist.');
       }
 
-      items.push(product);
+      if (updateFavouriteProducts?.isAdd === true) {
+        items.push(product);
+      } else {
+        const productIndex = items.findIndex((item) => item.id === product.id);
+
+        if (productIndex > -1) {
+          items.splice(productIndex, 1);
+        }
+      }
 
       user.favouriteProducts = items;
 
@@ -584,11 +593,11 @@ export class ProductsService {
     }
   }
 
-  async getFavouriteProducts(userId: number) {
+  async getFavouriteProducts(currentUser: UserEntity) {
     try {
       let user = await this.userRepository.findOne({
         where: {
-          id: userId,
+          id: currentUser?.id,
         },
         relations: {
           favouriteProducts: true,
