@@ -19,7 +19,6 @@ import { OrderProductEntity } from '../order_products/entities/order-products.en
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { PaymentService } from 'src/payment/payment.service';
-import { CreatePaymentDto } from 'src/payment/dto/create-payment.dto';
 
 @Injectable()
 export class OrdersService {

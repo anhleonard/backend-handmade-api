@@ -1,12 +1,6 @@
-import {
-  IsArray,
-  IsBoolean,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-} from 'class-validator';
+import { IsArray, IsNotEmpty, IsNumber } from 'class-validator';
 
-export class CreatePaymentDto {
+export class CreateOrderPaymentDto {
   @IsNotEmpty({ message: 'orderedProducts is not empty.' })
   @IsArray()
   orderedProductIds: number[];

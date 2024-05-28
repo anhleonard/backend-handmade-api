@@ -3,11 +3,12 @@ import * as moment from 'moment';
 import * as CryptoJS from 'crypto-js';
 import axios from 'axios';
 import * as qs from 'qs';
-import { CreatePaymentDto } from './dto/create-payment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrderProductEntity } from 'src/order_products/entities/order-products.entity';
 import { Repository } from 'typeorm';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { CreateAuctionPaymentDto } from './dto/create-auction-payment.dto';
+import { CreateOrderPaymentDto } from './dto/create-order-payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -15,7 +16,7 @@ export class PaymentService {
     @InjectRepository(OrderProductEntity)
     private readonly opRepository: Repository<OrderProductEntity>,
   ) {}
-  async payment(createPaymentDto: CreatePaymentDto, user: UserEntity) {
+  async payment(createPaymentDto: CreateOrderPaymentDto, user: UserEntity) {
     const { totalPayment, currentUser } = await this.filteredOrder(
       createPaymentDto,
       user,
@@ -80,7 +81,7 @@ export class PaymentService {
 
   //lọc thông tin của order
   async filteredOrder(
-    createPaymentDto: CreatePaymentDto,
+    createPaymentDto: CreateOrderPaymentDto,
     currentUser: UserEntity,
   ) {
     let orderProducts = [];
@@ -129,6 +130,68 @@ export class PaymentService {
       totalPayment,
       currentUser,
     };
+  }
+
+  async paymentAuction(
+    auctionPayment: CreateAuctionPaymentDto,
+    currentUser: UserEntity,
+  ) {
+    // APP INFO
+    const config = {
+      app_id: '2554',
+      key1: 'sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn',
+      key2: 'trMrHtvjo6myautxDUiAcYsVtaeQ8nhf',
+      endpoint: 'https://sb-openapi.zalopay.vn/v2/create',
+    };
+
+    const embed_data = {
+      redirecturl: auctionPayment.isDepositPayment
+        ? 'https://9728-14-177-235-116.ngrok-free.app/create-completed-auction'
+        : 'https://9728-14-177-235-116.ngrok-free.app/payment-full-auction',
+    };
+
+    const items = [{}]; // add items to order
+    const transID = Math.floor(Math.random() * 1000000);
+    const order = {
+      app_id: config.app_id,
+      app_trans_id: `${moment().format('YYMMDD')}_${transID}_${
+        auctionPayment.auctionId
+      }`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
+      app_user: currentUser.name, // change user name
+      app_time: Date.now(), // miliseconds
+      item: JSON.stringify(items),
+      embed_data: JSON.stringify(embed_data),
+      amount: auctionPayment.amount, // change total payment
+      description: `Handmade - Payment for the order #${transID}`,
+      bank_code: '',
+      mac: '',
+    };
+
+    // appid|app_trans_id|appuser|amount|apptime|embeddata|item
+    const data =
+      config.app_id +
+      '|' +
+      order.app_trans_id +
+      '|' +
+      order.app_user +
+      '|' +
+      order.amount +
+      '|' +
+      order.app_time +
+      '|' +
+      order.embed_data +
+      '|' +
+      order.item;
+    order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
+
+    try {
+      const res = await axios.post(config.endpoint, null, { params: order });
+      if (res) {
+        return res.data;
+      }
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   async callback(body: any) {
@@ -202,8 +265,6 @@ export class PaymentService {
       data: qs.stringify(postData),
     };
 
-    console.log(postConfig);
-
     try {
       const res = await axios(postConfig);
       if (res) {
@@ -230,7 +291,7 @@ export class PaymentService {
       app_id: config.appid,
       m_refund_id: `${moment().format('YYMMDD')}_${config.appid}_${uid}`,
       timestamp, // miliseconds
-      zp_trans_id: '240527000000206',
+      zp_trans_id: '240528000003802',
       amount: '50000',
       description: 'ZaloPay Refund Demo',
       mac: '',
@@ -250,7 +311,11 @@ export class PaymentService {
     params.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
 
     try {
-      const res = await axios.post(config.refund_url, null, { params });
+      const res = await axios.post(config.refund_url, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
       if (res) {
         return res.data;
       }

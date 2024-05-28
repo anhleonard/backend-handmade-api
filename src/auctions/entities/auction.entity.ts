@@ -23,7 +23,7 @@ export class AuctionEntity {
   isAccepted: boolean; //được admin accept chưa
 
   @Column({ nullable: true })
-  additionalComment: string; //nếu ko oke, admin yêu cầu sửa lại
+  additionalComment: string; //lý do hủy auction
 
   @Column()
   name: string;
@@ -53,7 +53,13 @@ export class AuctionEntity {
   maxDays: number; //số ngày mà dự án nên hoàn thành sau khi đấu giá xong
 
   @Column()
-  deposit: number; // lợi nhuận
+  deposit: number; // tiền cọc
+
+  @Column({ default: false })
+  isPaymentDeposit: boolean; //đã thanh toán tiền cọc hay chưa
+
+  @Column({ default: false })
+  isPaymentFull: boolean; //đã thanh toán hết chưa <lấy tiền seller confirm - tiền cọc>
 
   @BeforeInsert()
   calculateDeposit() {
