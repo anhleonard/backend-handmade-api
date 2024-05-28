@@ -9,6 +9,10 @@ import { Repository } from 'typeorm';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { CreateAuctionPaymentDto } from './dto/create-auction-payment.dto';
 import { CreateOrderPaymentDto } from './dto/create-order-payment.dto';
+import { RefundPayment } from './dto/refund-payment.dto';
+
+const headerUrl =
+  'https://0854-2405-4802-1ca0-7760-c9bd-4fe3-94ae-41ea.ngrok-free.app'; // localhost 3000
 
 @Injectable()
 export class PaymentService {
@@ -31,8 +35,7 @@ export class PaymentService {
     };
 
     const embed_data = {
-      redirecturl:
-        'https://7288-2405-4802-1c94-8160-94b-b4ae-c0e9-43e3.ngrok-free.app/complete-order',
+      redirecturl: `${headerUrl}/complete-order`,
     };
 
     const items = [{}]; // add items to order
@@ -146,8 +149,8 @@ export class PaymentService {
 
     const embed_data = {
       redirecturl: auctionPayment.isDepositPayment
-        ? 'https://9728-14-177-235-116.ngrok-free.app/create-completed-auction'
-        : 'https://9728-14-177-235-116.ngrok-free.app/payment-full-auction',
+        ? `${headerUrl}/create-completed-auction`
+        : `${headerUrl}/payment-full-auction`,
     };
 
     const items = [{}]; // add items to order
@@ -271,11 +274,11 @@ export class PaymentService {
         return res.data;
       }
     } catch (error) {
-      return error.message;
+      throw new BadRequestException(error.message);
     }
   }
 
-  async refund() {
+  async refund(refundPayment: RefundPayment) {
     // APP INFO
     const config = {
       appid: '2554',
@@ -291,8 +294,8 @@ export class PaymentService {
       app_id: config.appid,
       m_refund_id: `${moment().format('YYMMDD')}_${config.appid}_${uid}`,
       timestamp, // miliseconds
-      zp_trans_id: '240528000003802',
-      amount: '50000',
+      zp_trans_id: refundPayment.zp_trans_id,
+      amount: refundPayment.amount.toString(),
       description: 'ZaloPay Refund Demo',
       mac: '',
     };
@@ -316,11 +319,108 @@ export class PaymentService {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
+
+      if (res) {
+        let data: any;
+        do {
+          data = await this.checkRefundStatus(params.m_refund_id);
+          if (data?.return_code === 1 || data?.return_code === 2) {
+            return data;
+          }
+        } while (data?.return_code !== 1 && data?.return_code !== 2);
+      }
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async checkRefundStatus(m_refund_id: string) {
+    // APP INFO
+    const config = {
+      appid: '2554',
+      key1: 'sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn',
+      key2: 'trMrHtvjo6myautxDUiAcYsVtaeQ8nhf',
+      endpoint: 'https://sb-openapi.zalopay.vn/v2/query_refund',
+    };
+
+    const params = {
+      app_id: config.appid,
+      timestamp: Date.now(), // miliseconds
+      m_refund_id: m_refund_id,
+      mac: '',
+    };
+
+    const data =
+      config.appid + '|' + params.m_refund_id + '|' + params.timestamp; // app_id|m_refund_id|timestamp
+    params.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
+
+    try {
+      const res = await axios.post(config.endpoint, params, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      if (res) {
+        return res?.data;
+      }
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  async testPayment() {
+    // APP INFO
+    const config = {
+      app_id: '2554',
+      key1: 'sdngKKJmqEMzvh5QQcdD2A9XBSKUNaYn',
+      key2: 'trMrHtvjo6myautxDUiAcYsVtaeQ8nhf',
+      endpoint: 'https://sb-openapi.zalopay.vn/v2/create',
+    };
+
+    const embed_data = {
+      redirecturl: 'https://www.google.com/',
+    };
+
+    const items = [{}]; // add items to order
+    const transID = Math.floor(Math.random() * 1000000);
+    const order = {
+      app_id: config.app_id,
+      app_trans_id: `${moment().format('YYMMDD')}_${transID}`, // translation missing: vi.docs.shared.sample_code.comments.app_trans_id
+      app_user: 'anhleonard', // change user name
+      app_time: Date.now(), // miliseconds
+      item: JSON.stringify(items),
+      embed_data: JSON.stringify(embed_data),
+      amount: '15000', // change total payment
+      description: `Handmade - Payment for the order #${transID}`,
+      bank_code: '',
+      mac: '',
+    };
+
+    // appid|app_trans_id|appuser|amount|apptime|embeddata|item
+    const data =
+      config.app_id +
+      '|' +
+      order.app_trans_id +
+      '|' +
+      order.app_user +
+      '|' +
+      order.amount +
+      '|' +
+      order.app_time +
+      '|' +
+      order.embed_data +
+      '|' +
+      order.item;
+    order.mac = CryptoJS.HmacSHA256(data, config.key1).toString();
+
+    try {
+      const res = await axios.post(config.endpoint, null, { params: order });
       if (res) {
         return res.data;
       }
     } catch (error) {
-      return error.message;
+      throw new BadRequestException(error.message);
     }
   }
 }

@@ -7,6 +7,7 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { CurrentUser } from 'src/utility/decorators/current-user.decorator';
 import { CreateAuctionPaymentDto } from './dto/create-auction-payment.dto';
 import { CreateOrderPaymentDto } from './dto/create-order-payment.dto';
+import { RefundPayment } from './dto/refund-payment.dto';
 
 @Controller('payment')
 export class PaymentController {
@@ -41,7 +42,17 @@ export class PaymentController {
   }
 
   @Post('/refund')
-  async refund() {
-    return this.paymentService.refund();
+  async refund(@Body() refundPayment: RefundPayment) {
+    return this.paymentService.refund(refundPayment);
+  }
+
+  @Get('/check-refund-status/:m_refund_id')
+  async checkRefundStatus(@Param('m_refund_id') m_refund_id: string) {
+    return this.paymentService.checkRefundStatus(m_refund_id);
+  }
+
+  @Post('/test')
+  async testPayment() {
+    return this.paymentService.testPayment();
   }
 }

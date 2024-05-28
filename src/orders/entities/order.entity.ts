@@ -74,6 +74,13 @@ export class OrderEntity {
   @Column({ nullable: true })
   deliveredAt: Date;
 
+  //thông số về payment
+  @Column({ nullable: true })
+  apptransid: string;
+
+  @Column({ nullable: true })
+  zp_trans_id: string;
+
   @ManyToOne(() => UserEntity, (user) => user.ordersUpdateBy, {
     onDelete: 'SET NULL',
   })

@@ -155,9 +155,18 @@ export class OrdersService {
     if (createOrderDto.isPaid) {
       orderEntity.isPaid = true;
       orderEntity.status = OrderStatus.PROCESSING;
+      orderEntity.processingAt = new Date();
     } else {
       orderEntity.isPaid = false;
       orderEntity.status = OrderStatus.WAITING_PAYMENT;
+    }
+
+    if (createOrderDto?.apptransid) {
+      orderEntity.apptransid = createOrderDto?.apptransid;
+    }
+
+    if (createOrderDto?.zp_trans_id) {
+      orderEntity.zp_trans_id = createOrderDto?.zp_trans_id;
     }
 
     return await this.orderRepository.save(orderEntity);

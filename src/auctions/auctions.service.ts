@@ -100,6 +100,7 @@ export class AuctionsService {
       updateAuctionDto?.status === AuctionStatus.CANCELED
     ) {
       auction.canceledBy = currentUser;
+      auction.additionalComment;
     }
 
     Object.assign(auction, updateAuctionDto);
