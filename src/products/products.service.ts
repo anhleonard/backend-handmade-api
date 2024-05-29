@@ -808,4 +808,29 @@ export class ProductsService {
       last_page: Math.ceil(total / perPage),
     };
   }
+
+  async filterProductsByStore(storeId: number, query: any) {
+    const builder = this.productRepository.createQueryBuilder('products');
+
+    builder.where('products.status = :status', { status: 'SELLING' });
+
+    builder
+      .leftJoinAndSelect('products.store', 'store')
+      .andWhere('store.id = :id', { id: storeId });
+
+    if (query?.productName) {
+      const name = query.productName.toLowerCase();
+
+      builder.andWhere(
+        '(LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName)',
+        {
+          productName: `%${name}%`,
+        },
+      );
+    }
+
+    const products = await builder.getMany();
+
+    return products;
+  }
 }
