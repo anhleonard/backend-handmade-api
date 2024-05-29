@@ -11,7 +11,7 @@ import { CreateAuctionPaymentDto } from './dto/create-auction-payment.dto';
 import { CreateOrderPaymentDto } from './dto/create-order-payment.dto';
 import { RefundPayment } from './dto/refund-payment.dto';
 
-const headerUrl = 'https://1011-14-177-235-116.ngrok-free.app/'; // localhost 3000
+const headerUrl = 'https://7b72-14-177-235-116.ngrok-free.app'; // localhost 3000
 
 @Injectable()
 export class PaymentService {

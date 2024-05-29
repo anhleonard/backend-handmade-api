@@ -24,6 +24,7 @@ import { CreateProgressDto } from './dto/progress/create-progress.dto';
 import { UpdateProductDto } from 'src/products/dto/update-product.dto';
 import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 import { CreatePaidAuctionDto } from './dto/auction/create-paid-auction.dto';
+import { UpdatePaidAuctionDto } from './dto/auction/update-paid-auction.dto';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -168,5 +169,15 @@ export class AuctionsController {
   @Post('/create-paid-auction')
   async createPaidAuction(@Body() createPaidAuction: CreatePaidAuctionDto) {
     return await this.auctionsService.createPaidAuction(createPaidAuction);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Put('/update-deposit-paid-auction')
+  async updateDepositPaidAuction(
+    @Body() updatePaidAuction: UpdatePaidAuctionDto,
+  ) {
+    return await this.auctionsService.updateDepositPaidAuction(
+      updatePaidAuction,
+    );
   }
 }

@@ -23,6 +23,7 @@ import { UpdateProductDto } from 'src/products/dto/update-product.dto';
 import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 import { CreatePaidAuctionDto } from './dto/auction/create-paid-auction.dto';
 import { PaidAuctionEntity } from './entities/paid-auction.entity';
+import { UpdatePaidAuctionDto } from './dto/auction/update-paid-auction.dto';
 
 @Injectable()
 export class AuctionsService {
@@ -200,6 +201,7 @@ export class AuctionsService {
         shipping: true,
         owner: true,
         canceledBy: true,
+        paids: true,
       },
     });
 
@@ -544,6 +546,28 @@ export class AuctionsService {
     const paid = this.paidRepository.create(createPaidAuction);
 
     paid.auction = auction;
+
+    return await this.paidRepository.save(paid);
+  }
+
+  async updateDepositPaidAuction(updatePaidAuction: UpdatePaidAuctionDto) {
+    const paid = await this.paidRepository.findOne({
+      where: {
+        type: 'deposit',
+        auction: {
+          id: updatePaidAuction?.auctionId,
+        },
+      },
+      relations: {
+        auction: true,
+      },
+    });
+
+    if (!paid) {
+      throw new NotFoundException('Paid auction not found!');
+    }
+
+    paid.isRefund = true;
 
     return await this.paidRepository.save(paid);
   }
