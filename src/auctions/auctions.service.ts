@@ -21,6 +21,8 @@ import { CreateProgressDto } from './dto/progress/create-progress.dto';
 import { ProgressEntity } from './entities/progress.entity';
 import { UpdateProductDto } from 'src/products/dto/update-product.dto';
 import { UpdateProgressDto } from './dto/progress/update-progress.dto';
+import { CreatePaidAuctionDto } from './dto/auction/create-paid-auction.dto';
+import { PaidAuctionEntity } from './entities/paid-auction.entity';
 
 @Injectable()
 export class AuctionsService {
@@ -35,6 +37,8 @@ export class AuctionsService {
     private readonly bidderRepository: Repository<BidderEntity>,
     @InjectRepository(ProgressEntity)
     private readonly progressRepository: Repository<ProgressEntity>,
+    @InjectRepository(PaidAuctionEntity)
+    private readonly paidRepository: Repository<PaidAuctionEntity>,
   ) {}
 
   /// --------------- auction ------------------- ///
@@ -524,5 +528,23 @@ export class AuctionsService {
       page,
       last_page: Math.ceil(total / perPage),
     };
+  }
+
+  async createPaidAuction(createPaidAuction: CreatePaidAuctionDto) {
+    const auction = await this.auctionRepository.findOne({
+      where: {
+        id: createPaidAuction.auctionId,
+      },
+    });
+
+    if (!auction) {
+      throw new NotFoundException('Auction not found');
+    }
+
+    const paid = this.paidRepository.create(createPaidAuction);
+
+    paid.auction = auction;
+
+    return await this.paidRepository.save(paid);
   }
 }

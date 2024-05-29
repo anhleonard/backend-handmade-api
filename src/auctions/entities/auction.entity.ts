@@ -13,6 +13,7 @@ import {
 import { ProgressEntity } from './progress.entity';
 import { AuctionStatus } from '../enum/auction.enum';
 import { BidderEntity } from './bidder.entity';
+import { PaidAuctionEntity } from './paid-auction.entity';
 
 @Entity({ name: 'auctions' })
 export class AuctionEntity {
@@ -92,4 +93,7 @@ export class AuctionEntity {
 
   @ManyToOne(() => UserEntity, (user) => user.auctions)
   canceledBy: UserEntity;
+
+  @OneToMany(() => PaidAuctionEntity, (paid) => paid.auction)
+  paids: PaidAuctionEntity[];
 }

@@ -8,6 +8,7 @@ import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { BidderEntity } from './entities/bidder.entity';
 import { ProgressEntity } from './entities/progress.entity';
+import { PaidAuctionEntity } from './entities/paid-auction.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ProgressEntity } from './entities/progress.entity';
       StoreEntity,
       BidderEntity,
       ProgressEntity,
+      PaidAuctionEntity,
     ]),
   ],
   providers: [AuctionsService],
