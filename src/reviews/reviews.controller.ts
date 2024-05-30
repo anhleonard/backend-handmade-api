@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Put,
+  Query,
 } from '@nestjs/common';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -23,6 +24,11 @@ import { CreateReportReviewDto } from './dto/create-report-review.dto';
 @Controller('reviews')
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
+
+  @Get('/created-review/')
+  async getCreatedReview(@Query() query: any) {
+    return this.reviewsService.getCreatedReview(query);
+  }
 
   //tạo review
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))

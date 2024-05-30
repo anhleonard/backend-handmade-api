@@ -16,6 +16,7 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { ShippingEntity } from 'src/shippings/entities/shipping.entity';
 import { OrderProductEntity } from '../../order_products/entities/order-products.entity';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
+import { ReviewEntity } from 'src/reviews/entities/review.entity';
 
 @Entity({ name: 'orders' })
 export class OrderEntity {
@@ -107,4 +108,7 @@ export class OrderEntity {
     onDelete: 'SET NULL',
   })
   store: StoreEntity;
+
+  @OneToMany(() => ReviewEntity, (rev) => rev.order)
+  reviews: ReviewEntity[];
 }

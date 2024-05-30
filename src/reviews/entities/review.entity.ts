@@ -1,3 +1,4 @@
+import { OrderEntity } from 'src/orders/entities/order.entity';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import {
@@ -43,4 +44,9 @@ export class ReviewEntity {
     onDelete: 'SET NULL',
   })
   product: ProductEntity;
+
+  @ManyToOne((type) => OrderEntity, (order) => order.reviews, {
+    onDelete: 'SET NULL',
+  })
+  order: OrderEntity;
 }

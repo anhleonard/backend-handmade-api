@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { ProductsService } from 'src/products/products.service';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { CreateReportReviewDto } from './dto/create-report-review.dto';
+import { OrderEntity } from 'src/orders/entities/order.entity';
 
 @Injectable()
 export class ReviewsService {
@@ -21,9 +22,21 @@ export class ReviewsService {
     private readonly reviewRepository: Repository<ReviewEntity>,
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
+    @InjectRepository(OrderEntity)
+    private readonly orderRepository: Repository<OrderEntity>,
     private readonly productService: ProductsService,
   ) {}
   async create(createReviewDto: CreateReviewDto, currentUser: UserEntity) {
+    const order = await this.orderRepository.findOne({
+      where: {
+        id: createReviewDto.orderId,
+      },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found.');
+    }
+
     const product = await this.productRepository.findOne({
       where: {
         id: createReviewDto.productId,
@@ -34,15 +47,17 @@ export class ReviewsService {
       throw new NotFoundException('Product not found.');
     }
 
-    let review = await this.findOneByUserAndProduct(
+    let review = await this.findCreatedReview(
       currentUser.id,
       createReviewDto.productId,
+      createReviewDto.orderId,
     );
 
     if (!review) {
       review = this.reviewRepository.create(createReviewDto);
       review.user = currentUser;
       review.product = product;
+      review.order = order;
     } else {
       (review.comment = createReviewDto.comment),
         (review.ratings = createReviewDto.ratings);
@@ -170,7 +185,7 @@ export class ReviewsService {
     }
   }
 
-  async findOneByUserAndProduct(userId: number, productId: number) {
+  async findCreatedReview(userId: number, productId: number, orderId: number) {
     return await this.reviewRepository.findOne({
       where: {
         user: {
@@ -179,13 +194,42 @@ export class ReviewsService {
         product: {
           id: productId,
         },
+        order: {
+          id: orderId,
+        },
       },
       relations: {
         user: true,
         product: {
           category: true,
         },
+        order: true,
       },
     });
+  }
+
+  async getCreatedReview(query: any) {
+    const review = await this.reviewRepository.findOne({
+      where: {
+        product: {
+          id: query?.productId,
+        },
+        order: {
+          id: query?.orderId,
+        },
+      },
+      relations: {
+        product: {
+          category: true,
+        },
+        order: true,
+      },
+    });
+
+    if (!review) {
+      throw new NotFoundException('Review not found.');
+    }
+
+    return review;
   }
 }

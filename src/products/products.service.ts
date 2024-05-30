@@ -269,6 +269,9 @@ export class ProductsService {
         },
         collections: true,
         store: true,
+        reviews: {
+          user: true,
+        },
       },
       select: {
         addedBy: {

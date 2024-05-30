@@ -1,8 +1,12 @@
 import { IsNotEmpty, IsNumber, IsString, Max, Min } from 'class-validator';
 
 export class CreateReviewDto {
-  @IsNotEmpty({ message: 'Product should not be empty.' })
-  @IsNumber({}, { message: 'Product Id should be number' })
+  @IsNotEmpty({ message: 'orderId should not be empty.' })
+  @IsNumber({}, { message: 'orderId should be number' })
+  orderId: number;
+
+  @IsNotEmpty({ message: 'productId should not be empty.' })
+  @IsNumber({}, { message: 'productId should be number' })
   productId: number;
 
   @IsNotEmpty({ message: 'ratings could not be empty' })
