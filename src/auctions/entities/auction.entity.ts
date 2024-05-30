@@ -79,21 +79,36 @@ export class AuctionEntity {
   })
   status: string;
 
-  @ManyToOne(() => UserEntity, (user) => user.auctions)
+  @ManyToOne(() => UserEntity, (user) => user.auctions, {
+    onDelete: 'SET NULL',
+  })
   owner: UserEntity;
 
-  @ManyToOne(() => ShippingEntity, (shipping) => shipping.auctions)
+  @ManyToOne(() => ShippingEntity, (shipping) => shipping.auctions, {
+    onDelete: 'SET NULL',
+  })
   shipping: ShippingEntity;
 
-  @OneToMany(() => ProgressEntity, (pro) => pro.auction)
+  @OneToMany(() => ProgressEntity, (pro) => pro.auction, {
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
   progresses: ProgressEntity[];
 
-  @OneToMany(() => BidderEntity, (bidder) => bidder.auction)
+  @OneToMany(() => BidderEntity, (bidder) => bidder.auction, {
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
   candidates: BidderEntity[];
 
-  @ManyToOne(() => UserEntity, (user) => user.auctions)
+  @ManyToOne(() => UserEntity, (user) => user.auctions, {
+    onDelete: 'SET NULL',
+  })
   canceledBy: UserEntity;
 
-  @OneToMany(() => PaidAuctionEntity, (paid) => paid.auction)
+  @OneToMany(() => PaidAuctionEntity, (paid) => paid.auction, {
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
   paids: PaidAuctionEntity[];
 }

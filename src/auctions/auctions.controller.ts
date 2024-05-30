@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -21,7 +22,6 @@ import { UpdateBidderDto } from './dto/bidder/update-bidder.dto';
 import { GetByAuctionStatus } from './dto/auction/get-auction-status.dto';
 import { UpdateAuctionStatusDto } from './dto/auction/update-status-auction.dto';
 import { CreateProgressDto } from './dto/progress/create-progress.dto';
-import { UpdateProductDto } from 'src/products/dto/update-product.dto';
 import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 import { CreatePaidAuctionDto } from './dto/auction/create-paid-auction.dto';
 import { UpdatePaidAuctionDto } from './dto/auction/update-paid-auction.dto';
@@ -104,6 +104,11 @@ export class AuctionsController {
   @Get('/:id')
   async findOne(@Param('id') id: string) {
     return await this.auctionsService.findOne(+id);
+  }
+
+  @Delete('/delete/:id')
+  async delete(@Param('id') id: string) {
+    return await this.auctionsService.delete(+id);
   }
 
   /// --------------- bidder ------------------- ///

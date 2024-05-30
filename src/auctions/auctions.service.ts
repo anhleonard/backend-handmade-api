@@ -571,4 +571,16 @@ export class AuctionsService {
 
     return await this.paidRepository.save(paid);
   }
+
+  async delete(id: number) {
+    const auction = await this.auctionRepository.findOne({
+      where: { id },
+    });
+
+    if (!auction) {
+      throw new NotFoundException('Auction not found');
+    }
+
+    return await this.auctionRepository.remove(auction);
+  }
 }
