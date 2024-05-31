@@ -26,5 +26,5 @@ export class UpdateAuctionDto extends PartialType(CreateAuctionDto) {
 
   @IsOptional()
   @IsEnum(AuctionStatus)
-  status: AuctionStatus;
+  status: AuctionStatus | null;
 }

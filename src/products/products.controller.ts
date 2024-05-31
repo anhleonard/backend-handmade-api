@@ -138,6 +138,13 @@ export class ProductsController {
     );
   }
 
+  //cập nhật thông tin price, total number sau khi đã update variants
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Put('/update-product-variants/:id')
+  async updateProductVariants(@Param('id') id: string): Promise<ProductEntity> {
+    return await this.productsService.updateProductVariants(+id);
+  }
+
   //duyệt product by admin
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   @Put('/update-approve/:id')

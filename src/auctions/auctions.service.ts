@@ -96,10 +96,6 @@ export class AuctionsService {
       auction.canceledBy = currentUser;
     }
 
-    if (updateAuctionDto.maxAmount !== undefined) {
-      auction.deposit = updateAuctionDto.maxAmount * 0.3;
-    }
-
     if (
       updateAuctionDto?.status &&
       updateAuctionDto?.status === AuctionStatus.CANCELED
@@ -365,6 +361,7 @@ export class AuctionsService {
           owner: true,
           candidates: true,
           progresses: true,
+          canceledBy: true,
         },
       });
 

@@ -12,7 +12,7 @@ import { CreateOrderPaymentDto } from './dto/create-order-payment.dto';
 import { RefundPayment } from './dto/refund-payment.dto';
 
 const headerUrl =
-  'https://b5cb-2405-4802-1ca0-7760-c108-fc0-25b8-f711.ngrok-free.app'; // localhost 3000
+  'https://379e-118-70-129-28.ngrok-free.app'; // localhost 3000
 
 @Injectable()
 export class PaymentService {

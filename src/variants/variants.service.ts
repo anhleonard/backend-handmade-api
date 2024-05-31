@@ -130,6 +130,23 @@ export class VariantsService {
     return await this.variantRepository.save(variant);
   }
 
+  //sau khi cập nhật variant xong thì update các thông tin của product như price, totalNumber
+  async updateSimpleVariant(id: number, updateVariantDto: UpdateVariantDto) {
+    const variant = await this.variantRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!variant) {
+      throw new NotFoundException('Variant not found');
+    }
+
+    Object.assign(variant, updateVariantDto);
+
+    return await this.variantRepository.save(variant);
+  }
+
   async delete(id: number) {
     const variant = await this.variantRepository.findOne({
       where: {

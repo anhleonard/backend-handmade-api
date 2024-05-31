@@ -49,6 +49,18 @@ export class VariantsController {
     );
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Put('/update-simple-variant/:id')
+  async updateSimpleVariant(
+    @Param('id') id: string,
+    @Body() updateVariantDto: UpdateVariantDto,
+  ) {
+    return await this.variantsService.updateSimpleVariant(
+      +id,
+      updateVariantDto,
+    );
+  }
+
   @Delete('/delete/:id')
   async delete(@Param('id') id: string) {
     return await this.variantsService.delete(+id);

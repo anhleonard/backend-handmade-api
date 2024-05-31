@@ -77,7 +77,7 @@ export class AuctionEntity {
     enum: AuctionStatus,
     nullable: true,
   })
-  status: string;
+  status: AuctionStatus | null;
 
   @ManyToOne(() => UserEntity, (user) => user.auctions, {
     onDelete: 'SET NULL',

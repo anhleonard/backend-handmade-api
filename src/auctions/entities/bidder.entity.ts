@@ -22,7 +22,9 @@ export class BidderEntity {
   @Column({ nullable: true })
   acceptedAt: Date; //bidder này được chọn lúc nào
 
-  @ManyToOne(() => StoreEntity, (store) => store.bidders)
+  @ManyToOne(() => StoreEntity, (store) => store.bidders, {
+    onDelete: 'SET NULL',
+  })
   store: StoreEntity;
 
   @ManyToOne(() => AuctionEntity, (auction) => auction.candidates)

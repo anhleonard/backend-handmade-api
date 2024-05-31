@@ -20,7 +20,6 @@ import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entit
 import { VariantsService } from 'src/variants/variants.service';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { CreateProductDto } from './dto/create-product.dto';
-import { CategoryEntity } from 'src/categories/entities/category.entity';
 import { ProductStatus } from './enum/product.enum';
 import { UpdateApproveProductDto } from './dto/update-approve-product.dto';
 import { UpdateFavouriteProducts } from './dto/update-favourite-product.dto';
@@ -109,6 +108,40 @@ export class ProductsService {
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
+  }
+
+  //sau khi cập nhật variant xong thì update các thông tin của product như price, totalNumber
+  async updateProductVariants(productId: number) {
+    const product = await this.productRepository.findOne({
+      where: {
+        id: productId,
+      },
+      relations: {
+        variants: true,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    let sampleVariants = product.variants;
+
+    //Tìm min price
+    const minUnitPrice = Math.min(
+      ...sampleVariants.map((variant: any) => variant.unitPrice),
+    );
+
+    // Tính tổng inventoryNumber
+    const totalInventoryNumber = sampleVariants.reduce(
+      (total: number, variant: any) => total + variant?.inventoryNumber,
+      0,
+    );
+
+    product.price = minUnitPrice;
+    product.inventoryNumber = totalInventoryNumber;
+
+    return await this.productRepository.save(product);
   }
 
   async findAll(
