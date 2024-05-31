@@ -35,6 +35,19 @@ import { UpdateFavouriteProducts } from './dto/update-favourite-product.dto';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  //1. filter all products
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Get('/filter-seller-products')
+  async filterAllProductsBySeller(
+    @Query() query: any,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.productsService.filterAllProductsBySeller(
+      query,
+      currentUser,
+    );
+  }
+
   // ADMIN
   @Get('/admin-filter-products')
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))

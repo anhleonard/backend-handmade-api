@@ -323,6 +323,88 @@ export class ProductsService {
   }
 
   // ----------------- start: FIND PRODUCTS BY SELLER --------------------- //
+  async filterAllProductsBySeller(query: any, currentUser: UserEntity) {
+    try {
+      const builder = this.productRepository.createQueryBuilder('products');
+
+      if (currentUser?.id) {
+        const sellerId = currentUser?.id;
+        builder.innerJoin(
+          'products.addedBy',
+          'addedBy',
+          'addedBy.id = :sellerId',
+          { sellerId },
+        );
+      }
+
+      if (query?.productName) {
+        const name = query.productName.toLowerCase();
+
+        builder.andWhere(
+          '(LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName)',
+          {
+            productName: `%${name}%`,
+          },
+        );
+      }
+
+      if (query?.status) {
+        builder.andWhere('(products.status = :status)', {
+          status: query?.status,
+        });
+      }
+
+      if (query?.productCode) {
+        builder.andWhere('(products.productCode = :productCode)', {
+          productCode: query?.productCode,
+        });
+      }
+
+      if (query?.inventoryNumber) {
+        builder.andWhere('(products.inventoryNumber = :inventoryNumber)', {
+          inventoryNumber: query?.inventoryNumber,
+        });
+      }
+
+      const page: number = parseInt(query?.page as any) || 1;
+      let perPage = 25;
+      if (query?.limit) {
+        perPage = query?.limit;
+      }
+      const total = await builder.getCount();
+
+      builder.offset((page - 1) * perPage).limit(perPage);
+
+      const products = await builder.getMany();
+
+      let customProducts: ProductEntity[] = [];
+      for (let product of products) {
+        const foundProduct = await this.productRepository.findOne({
+          where: {
+            id: product.id,
+          },
+          relations: {
+            category: true,
+            variants: {
+              variantItems: true,
+            },
+          },
+        });
+
+        customProducts.push(foundProduct);
+      }
+
+      return {
+        data: customProducts,
+        total,
+        page,
+        last_page: Math.ceil(total / perPage),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   //1. tất cả
   async getProductsBySeller(query: any, currentUser: UserEntity) {
     const builder = this.productRepository.createQueryBuilder('products');
