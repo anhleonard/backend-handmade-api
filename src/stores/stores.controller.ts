@@ -68,4 +68,16 @@ export class StoresController {
   async allStoreProducts(@CurrentUser() currentUser: UserEntity) {
     return await this.storesService.allStoreProducts(currentUser);
   }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/sales')
+  async storeSales(@CurrentUser() currentUser: UserEntity) {
+    return await this.storesService.getStoreSales(currentUser);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/best-sale-products')
+  async bestSaleProducts(@CurrentUser() currentUser: UserEntity) {
+    return await this.storesService.bestSaleProducts(currentUser);
+  }
 }

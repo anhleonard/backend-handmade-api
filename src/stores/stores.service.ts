@@ -7,9 +7,10 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreEntity } from './entities/stores.entity';
-import { Repository } from 'typeorm';
+import { Connection, MoreThan, Repository, getConnection } from 'typeorm';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { ProductStatus } from 'src/products/enum/product.enum';
+import { OrderStatus } from 'src/orders/enums/order-status.enum';
 
 @Injectable()
 export class StoresService {
@@ -227,5 +228,128 @@ export class StoresService {
     );
 
     return filteredProducts;
+  }
+
+  formatDate(inputDate: string): string {
+    const date = new Date(inputDate);
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    };
+    return date.toLocaleDateString('en-GB', options);
+  }
+
+  async getStoreSales(currentUser: UserEntity) {
+    const store = await this.storeRepository.findOne({
+      where: {
+        owner: {
+          id: currentUser.id,
+        },
+      },
+      relations: ['orders'],
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    // Lấy ngày hiện tại
+    const currentDate = new Date();
+
+    // Tạo một mảng để lưu trữ dữ liệu
+    const revenueByDay = [];
+
+    // Duyệt qua 12 ngày gần nhất
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(currentDate);
+      date.setDate(date.getDate() - i); // Giảm ngày đi i ngày để lấy các ngày trước đó
+
+      // Lấy ngày đặt hàng của đơn hàng
+      const orderDate = date.toISOString().split('T')[0]; // Chỉ lấy phần ngày, không cần giờ
+
+      // Tìm xem ngày này đã tồn tại trong mảng chưa
+      const existingDay = store.orders.find(
+        (order) =>
+          new Date(order.orderAt.toString()).toISOString().split('T')[0] ===
+          orderDate,
+      );
+
+      if (existingDay) {
+        // Nếu ngày đã tồn tại, thêm vào mảng revenueByDay
+        revenueByDay.push({
+          orderDate: orderDate,
+          orderAt: this.formatDate(orderDate),
+          totalRevenue: existingDay.provisionalAmount,
+          totalOrders: 1,
+        });
+      } else {
+        // Nếu ngày không tồn tại, thêm vào mảng revenueByDay với totalRevenue và totalOrders là 0
+        revenueByDay.push({
+          orderDate: orderDate,
+          orderAt: this.formatDate(orderDate),
+          totalRevenue: 0,
+          totalOrders: 0,
+        });
+      }
+    }
+
+    return revenueByDay.reverse(); // Trả về thông tin về 12 ngày gần nhất
+  }
+
+  async bestSaleProducts(currentUser: UserEntity) {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const store = await this.storeRepository.findOne({
+      where: {
+        owner: {
+          id: currentUser.id,
+        },
+        orders: {
+          status: OrderStatus.SHIPPED,
+          orderAt: MoreThan(thirtyDaysAgo),
+        },
+      },
+      relations: {
+        orders: {
+          orderProducts: {
+            product: true,
+          },
+        },
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    if (store.orders.length) {
+      const orderProducts = store.orders
+        .map((order) => order.orderProducts)
+        .flat();
+
+      const productSalesMap = new Map<number, number>();
+
+      orderProducts.forEach((orderProduct) => {
+        const productId = orderProduct.product.id;
+        const productQuantity = orderProduct.productQuantity;
+        const totalQuantity = productSalesMap.get(productId) || 0;
+        productSalesMap.set(productId, totalQuantity + productQuantity);
+      });
+
+      const topProducts = Array.from(productSalesMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([productId, totalQuantity]) => ({
+          productId: orderProducts.find((op) => op.product.id === productId)
+            .product.id,
+          productName: orderProducts.find((op) => op.product.id === productId)
+            .product.productName,
+          totalQuantity,
+        }));
+
+      return topProducts;
+    }
   }
 }
