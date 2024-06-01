@@ -53,7 +53,6 @@ export class StoreCollectionsController {
     return await this.collectionsService.findOne(+collectId);
   }
 
-  @UseGuards(AuthenticationGuard)
   @Get('/seller/:sellerId')
   async getStoreCollections(
     @Param('sellerId') sellerId: string,

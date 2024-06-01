@@ -19,13 +19,20 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { OrderEntity } from './entities/order.entity';
 import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 import { Roles } from 'src/utility/common/user-roles.enum';
-import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
-import { OrderStatus } from './enums/order-status.enum';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  @Get('/seller-filter-orders')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  async sellerFilterOrders(
+    @Query() query: any,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.ordersService.sellerFilterOrders(query, currentUser);
+  }
 
   @Get('/admin-filter-orders')
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))

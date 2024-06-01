@@ -72,7 +72,6 @@ export class CreateProductDto {
 
   @ValidateIf((object, value) => !object.isMultipleClasses)
   @IsNumber({}, { message: 'inventoryNumber should be number' })
-  @Min(1, { message: 'inventoryNumber should be more than 0.' })
   inventoryNumber: number;
 
   @ValidateIf((object, value) => !object.isMultipleClasses)

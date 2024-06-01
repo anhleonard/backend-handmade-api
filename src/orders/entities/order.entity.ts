@@ -109,6 +109,9 @@ export class OrderEntity {
   })
   store: StoreEntity;
 
-  @OneToMany(() => ReviewEntity, (rev) => rev.order)
+  @OneToMany(() => ReviewEntity, (rev) => rev.order, {
+    onDelete: 'SET NULL',
+    cascade: true,
+  })
   reviews: ReviewEntity[];
 }

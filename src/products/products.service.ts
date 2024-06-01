@@ -405,186 +405,6 @@ export class ProductsService {
     }
   }
 
-  //1. tất cả
-  async getProductsBySeller(query: any, currentUser: UserEntity) {
-    const builder = this.productRepository.createQueryBuilder('products');
-
-    if (query?.productName) {
-      const name = query.productName.toLowerCase();
-
-      builder.where(
-        'LOWER(products.productName) LIKE :productName OR LOWER(products.description) LIKE :productName',
-        {
-          productName: `%${name}%`,
-        },
-      );
-    }
-
-    if (currentUser?.id) {
-      const sellerId = currentUser?.id;
-      builder.innerJoin(
-        'products.addedBy',
-        'addedBy',
-        'addedBy.id = :sellerId',
-        { sellerId },
-      );
-    }
-
-    const sort: any = query?.sort;
-
-    if (sort === 'BEST_RATING') {
-      builder
-        .innerJoinAndSelect('products.reviews', 'reviews')
-        .orderBy('reviews.ratings', 'DESC');
-    } else if (sort === 'PRICE_LOW_HIGH') {
-      builder.orderBy('CAST(products.price AS INT)', 'ASC');
-    } else if (sort === 'PRICE_HIGH_LOW') {
-      builder.orderBy('CAST(products.price AS INT)', 'DESC');
-    } else if (sort === 'NEWEST') {
-      builder.orderBy('products.createdAt', 'ASC');
-    }
-
-    //lọc discount
-    if (query?.discount) {
-      if (parseInt(query?.discount) === 1) {
-        builder.where('products.discount IS NOT NULL');
-      }
-    }
-
-    const page: number = parseInt(query?.page as any) || 1;
-    let perPage = 4;
-    if (query?.limit) {
-      perPage = query?.limit;
-    }
-    const total = await builder.getCount();
-
-    builder.offset((page - 1) * perPage).limit(perPage);
-
-    return {
-      data: await builder.getMany(),
-      total,
-      page,
-      last_page: Math.ceil(total / perPage),
-    };
-  }
-
-  async getPendingProducts(currentUser: UserEntity) {
-    const products = await this.productRepository.find({
-      where: {
-        addedBy: {
-          id: currentUser.id,
-        },
-        isAccepted: false,
-        status: ProductStatus.PENDING,
-      },
-      relations: {
-        category: true,
-        variants: {
-          variantItems: true,
-        },
-      },
-    });
-
-    if (!products) {
-      throw new NotFoundException('Products not found by seller');
-    }
-
-    return products;
-  }
-
-  async getSellingProducts(currentUser: UserEntity) {
-    const products = await this.productRepository.find({
-      where: {
-        addedBy: {
-          id: currentUser.id,
-        },
-        isAccepted: true,
-        status: ProductStatus.SELLING,
-      },
-      relations: {
-        category: true,
-        variants: {
-          variantItems: true,
-        },
-      },
-    });
-
-    if (!products) {
-      throw new NotFoundException('Products not found by seller');
-    }
-
-    return products;
-  }
-
-  async getViolateProducts(currentUser: UserEntity) {
-    const products = await this.productRepository.find({
-      where: {
-        addedBy: {
-          id: currentUser.id,
-        },
-        status: ProductStatus.VIOLATE,
-      },
-      relations: {
-        category: true,
-        variants: {
-          variantItems: true,
-        },
-      },
-    });
-
-    if (!products) {
-      throw new NotFoundException('Products not found by seller');
-    }
-
-    return products;
-  }
-
-  async getEmptyProducts(currentUser: UserEntity) {
-    const products = await this.productRepository.find({
-      where: {
-        addedBy: {
-          id: currentUser.id,
-        },
-        status: ProductStatus.NO_ITEM,
-        inventoryNumber: 0,
-      },
-      relations: {
-        category: true,
-        variants: {
-          variantItems: true,
-        },
-      },
-    });
-
-    if (!products) {
-      throw new NotFoundException('Products not found by seller');
-    }
-
-    return products;
-  }
-
-  async getOffProducts(currentUser: UserEntity) {
-    const products = await this.productRepository.find({
-      where: {
-        addedBy: {
-          id: currentUser.id,
-        },
-        status: ProductStatus.OFF,
-      },
-      relations: {
-        category: true,
-        variants: {
-          variantItems: true,
-        },
-      },
-    });
-
-    if (!products) {
-      throw new NotFoundException('Products not found by seller');
-    }
-
-    return products;
-  }
   // -----------------end: FIND PRODUCTS BY SELLER --------------------- //
 
   async update(
@@ -638,14 +458,18 @@ export class ProductsService {
       throw new NotFoundException('Product not found!');
     }
 
-    if (product?.status !== ProductStatus.PENDING) {
+    if (
+      product?.status !== ProductStatus.PENDING &&
+      product?.status !== ProductStatus.VIOLATE &&
+      product?.status !== ProductStatus.OFF
+    ) {
       throw new BadRequestException(
-        'Status is not pending product. Not permission to remove!',
+        'Status is not pending, violate or off. Not permission to remove!',
       );
     }
 
     const order = await this.orderService.findOneByProductId(product.id);
-    if (order) throw new BadRequestException('Products is in use.');
+    if (order) throw new BadRequestException(`Products is in use.`);
 
     return await this.productRepository.remove(product);
   }

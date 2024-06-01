@@ -19,6 +19,7 @@ import { OrderProductEntity } from '../order_products/entities/order-products.en
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { PaymentService } from 'src/payment/payment.service';
+import * as moment from 'moment';
 
 @Injectable()
 export class OrdersService {
@@ -579,5 +580,89 @@ export class OrdersService {
     }
 
     return await this.orderRepository.remove(order);
+  }
+
+  async sellerFilterOrders(query: any, currentUser: UserEntity) {
+    try {
+      const builder = this.orderRepository.createQueryBuilder('orders');
+
+      builder
+        .leftJoinAndSelect('orders.store', 'store')
+        .leftJoinAndSelect('store.owner', 'owner')
+        .where('owner.id = :id', {
+          id: currentUser.id,
+        });
+
+      if (query?.status) {
+        builder.andWhere('(orders.status = :status)', {
+          status: query?.status,
+        });
+      }
+
+      if (query?.orderAt) {
+        const orderDate = moment(query.orderAt)
+          .startOf('day')
+          .format('YYYY-MM-DD');
+
+        builder.andWhere('DATE(orders.orderAt) = :orderDate', { orderDate });
+      }
+
+      if (query?.clientName) {
+        const name = query.clientName.toLowerCase();
+        builder
+          .leftJoinAndSelect('orders.client', 'client')
+          .andWhere('(LOWER(client.name) LIKE :name)', {
+            name: `%${name}%`,
+          });
+      }
+
+      const page: number = parseInt(query?.page as any) || 1;
+      let perPage = 25;
+      if (query?.limit) {
+        perPage = query?.limit;
+      }
+      const total = await builder.getCount();
+
+      builder.offset((page - 1) * perPage).limit(perPage);
+
+      if (query?.code) {
+        builder.andWhere('(orders.code = :code)', {
+          code: query?.code,
+        });
+      }
+
+      // CUSTOM ORDERS
+      const orders = await builder.getMany();
+
+      const customOrders: OrderEntity[] = [];
+
+      for (let order of orders) {
+        const foundOrder = await this.orderRepository.findOne({
+          where: {
+            id: order.id,
+          },
+          relations: {
+            store: true,
+            client: true,
+            orderProducts: {
+              product: true,
+              variant: true,
+            },
+            updatedBy: true,
+          },
+        });
+
+        customOrders.push(foundOrder);
+      }
+
+      return {
+        data: customOrders,
+        total,
+        page,
+        last_page: Math.ceil(total / perPage),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 }
