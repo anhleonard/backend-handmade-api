@@ -87,10 +87,14 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<UserEntity> {
-    const user = await this.usersRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException('user not found.');
-    const updatedUser = { ...user, ...updateUserDto };
-    return updatedUser;
+    try {
+      const user = await this.usersRepository.findOneBy({ id });
+      if (!user) throw new NotFoundException('user not found.');
+      Object.assign(user, updateUserDto);
+      return await this.usersRepository.save(user);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   remove(id: number) {

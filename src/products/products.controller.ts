@@ -14,6 +14,7 @@ import {
   UploadedFile,
   UploadedFiles,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -181,7 +182,11 @@ export class ProductsController {
 
   @Get('/uploads/image/:path')
   seeUploadedFile(@Param('path') path: string, @Res() res) {
-    return res.sendFile(path, { root: './uploads/image' });
+    try {
+      return res.sendFile(path, { root: './uploads/image' });
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
 
   // ----------------- ADMIN ------------------

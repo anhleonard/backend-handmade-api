@@ -19,6 +19,10 @@ export class UpdateStoreDto {
   mainBusiness: string;
 
   @IsOptional()
+  @IsString()
+  address: string;
+
+  @IsOptional()
   @IsEnum(StoreStatus)
   status: StoreStatus;
 

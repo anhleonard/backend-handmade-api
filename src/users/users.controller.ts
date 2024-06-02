@@ -62,7 +62,8 @@ export class UsersController {
     return await this.usersService.findOne(+id);
   }
 
-  @Put('update/:id')
+  @Put('/update/:id')
+  @UseGuards(AuthenticationGuard)
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
   }

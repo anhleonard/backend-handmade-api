@@ -36,6 +36,9 @@ export class StoreEntity {
   @Column()
   mainBusiness: string;
 
+  @Column({ nullable: true })
+  address: string;
+
   @CreateDateColumn()
   createdAt: Timestamp;
 

@@ -7,7 +7,7 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreEntity } from './entities/stores.entity';
-import { Connection, MoreThan, Repository, getConnection } from 'typeorm';
+import { Connection, MoreThan, Not, Repository, getConnection } from 'typeorm';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { ProductStatus } from 'src/products/enum/product.enum';
 import { OrderStatus } from 'src/orders/enums/order-status.enum';
@@ -307,7 +307,7 @@ export class StoresService {
           id: currentUser.id,
         },
         orders: {
-          status: OrderStatus.SHIPPED,
+          status: Not(OrderStatus.CENCELLED),
           orderAt: MoreThan(thirtyDaysAgo),
         },
       },
@@ -350,6 +350,29 @@ export class StoresService {
         }));
 
       return topProducts;
+    }
+  }
+
+  async singleStore(currentUser: UserEntity) {
+    try {
+      const store = await this.storeRepository.findOne({
+        where: {
+          owner: {
+            id: currentUser.id,
+          },
+        },
+        relations: {
+          owner: true,
+        },
+      });
+
+      if (!store) {
+        throw new NotFoundException('Store not found');
+      }
+
+      return store;
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
   }
 }
