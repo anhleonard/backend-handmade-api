@@ -38,6 +38,14 @@ export class ShippingsController {
     return await this.shippingsService.findAllByUser(+userId);
   }
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Get('/default')
+  async findDefaultShipping(
+    @CurrentUser() currentUser: UserEntity,
+  ): Promise<ShippingEntity> {
+    return await this.shippingsService.findDefaultShipping(currentUser);
+  }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER, Roles.ADMIN]))
   @Get('/:id')
   async findOne(@Param('id') id: number): Promise<ShippingEntity> {

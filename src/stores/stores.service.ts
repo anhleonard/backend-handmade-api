@@ -7,10 +7,11 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StoreEntity } from './entities/stores.entity';
-import { Connection, MoreThan, Not, Repository, getConnection } from 'typeorm';
+import { MoreThan, Not, Repository } from 'typeorm';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { ProductStatus } from 'src/products/enum/product.enum';
 import { OrderStatus } from 'src/orders/enums/order-status.enum';
+import { ChangeFollowerDto } from './dto/change-follower.dto';
 
 @Injectable()
 export class StoresService {
@@ -123,6 +124,7 @@ export class StoresService {
         collections: {
           products: true,
         },
+        followers: true,
       },
     });
 
@@ -374,5 +376,51 @@ export class StoresService {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  }
+
+  async changeFollower(changeFollowerDto: ChangeFollowerDto) {
+    const store = await this.storeRepository.findOne({
+      where: {
+        id: changeFollowerDto.storeId,
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: {
+        id: changeFollowerDto.userId,
+      },
+      relations: {
+        lovedStores: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    let lovedStoresUser = user.lovedStores;
+
+    // Check if the store already exists in lovedStoresUser
+    const storeExists = lovedStoresUser?.some(
+      (lovedStore) => lovedStore.id === store.id,
+    );
+
+    if (storeExists) {
+      // Remove the store from lovedStoresUser
+      lovedStoresUser = lovedStoresUser.filter(
+        (lovedStore) => lovedStore.id !== store.id,
+      );
+      user.lovedStores = lovedStoresUser;
+    } else {
+      // Add the store to lovedStoresUser if it does not exist
+      lovedStoresUser.push(store);
+      user.lovedStores = lovedStoresUser;
+    }
+
+    return await this.userRepository.save(user);
   }
 }

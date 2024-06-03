@@ -112,4 +112,17 @@ export class ShippingsService {
       await this.shippingRepository.save(currentDefaultAddress);
     }
   }
+
+  async findDefaultShipping(currentUser: UserEntity) {
+    const shipping = await this.shippingRepository.findOne({
+      where: {
+        isDefaultAddress: true,
+        user: {
+          id: currentUser.id,
+        },
+      },
+    });
+
+    return shipping;
+  }
 }

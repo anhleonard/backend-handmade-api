@@ -16,6 +16,7 @@ import { CurrentUser } from 'src/utility/decorators/current-user.decorator';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { UpdateStoreDto } from './dto/update-store.dto';
+import { ChangeFollowerDto } from './dto/change-follower.dto';
 
 @Controller('stores')
 export class StoresController {
@@ -85,5 +86,11 @@ export class StoresController {
   @Post('/single')
   async singleStore(@CurrentUser() currentUser: UserEntity) {
     return await this.storesService.singleStore(currentUser);
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
+  @Post('/change-follower')
+  async addFollower(@Body() changeFollowerDto: ChangeFollowerDto) {
+    return await this.storesService.changeFollower(changeFollowerDto);
   }
 }
