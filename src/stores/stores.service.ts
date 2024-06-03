@@ -14,6 +14,7 @@ import { OrderStatus } from 'src/orders/enums/order-status.enum';
 import { ChangeFollowerDto } from './dto/change-follower.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { TypeScore } from 'src/constants/enums';
+import { StoreStatus } from './enum/stores.enum';
 
 @Injectable()
 export class StoresService {
@@ -147,6 +148,19 @@ export class StoresService {
       });
     }
 
+    if (query?.notApproveReason !== undefined) {
+      const value =
+        query.notApproveReason === 'null' ? null : query.notApproveReason;
+
+      if (value === null) {
+        builder.andWhere('(stores.notApproveReason IS NULL)');
+      } else {
+        builder.andWhere('(stores.notApproveReason = :notApproveReason)', {
+          notApproveReason: value,
+        });
+      }
+    }
+
     //filter theo auction name
     if (query?.storeName) {
       const name = query.storeName.toLowerCase();
@@ -247,6 +261,7 @@ export class StoresService {
   async getStoreSales(currentUser: UserEntity) {
     const store = await this.storeRepository.findOne({
       where: {
+        status: StoreStatus.ACTIVE,
         owner: {
           id: currentUser.id,
         },
@@ -325,7 +340,7 @@ export class StoresService {
     });
 
     if (!store) {
-      throw new NotFoundException('Store not found');
+      throw new NotFoundException('Store not found.');
     }
 
     if (store.orders.length) {
