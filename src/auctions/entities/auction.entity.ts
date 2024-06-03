@@ -72,6 +72,9 @@ export class AuctionEntity {
   @Column({ default: false })
   readyToLaunch: boolean; //đã ss được giao hay chưa
 
+  @Column({ default: false })
+  isMinusPoint: boolean; //auction này đã làm cho store bị trừ điểm hay chưa
+
   @Column({
     type: 'enum',
     enum: AuctionStatus,

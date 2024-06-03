@@ -27,4 +27,8 @@ export class UpdateAuctionDto extends PartialType(CreateAuctionDto) {
   @IsOptional()
   @IsEnum(AuctionStatus)
   status: AuctionStatus | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isMinusPoint: boolean;
 }

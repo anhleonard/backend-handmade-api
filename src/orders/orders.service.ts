@@ -20,6 +20,8 @@ import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { PaymentService } from 'src/payment/payment.service';
 import * as moment from 'moment';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
+import { EnumScore } from 'src/constants/enums';
 
 @Injectable()
 export class OrdersService {
@@ -34,6 +36,8 @@ export class OrdersService {
     private readonly productRepository: Repository<ProductEntity>,
     @InjectRepository(VariantEntity)
     private readonly variantRepository: Repository<VariantEntity>,
+    @InjectRepository(StoreEntity)
+    private readonly storeRepository: Repository<StoreEntity>,
     @Inject(forwardRef(() => ProductsService))
     private readonly productService: ProductsService,
     @Inject(forwardRef(() => PaymentService))
@@ -272,15 +276,24 @@ export class OrdersService {
     if (updateOrderDto.status === OrderStatus.SHIPPED) {
       order.shippedAt = new Date();
       order.isPaid = true;
+      const store = order.store;
+      store.score = store.score + EnumScore.ORDER_SUCCESS;
+      await this.storeRepository.save(store);
     }
 
     if (updateOrderDto.status === OrderStatus.DELIVERED) {
       order.deliveredAt = new Date();
     }
 
+    if (updateOrderDto?.isMinusPoint) {
+      order.isMinusPoint = true;
+    } else if (!updateOrderDto?.isMinusPoint) {
+      order.updatedBy = currentUser;
+    }
+
     order.status = updateOrderDto.status;
-    order.updatedBy = currentUser;
     order.updatedAt = new Date();
+
     order = await this.orderRepository.save(order);
 
     //update sold number nếu đơn hàng đã giao

@@ -69,6 +69,9 @@ export class StoreEntity {
   @Column({ default: StoreStatus.INACTIVE })
   status: StoreStatus;
 
+  @Column({ default: 1000 })
+  score: number;
+
   @OneToOne(() => UserEntity, (user) => user.store)
   @JoinColumn()
   owner: UserEntity;

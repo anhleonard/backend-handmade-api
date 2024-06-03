@@ -9,4 +9,8 @@ export class UpdateOrderDto {
   @IsOptional()
   @IsBoolean()
   isReadyDelivery: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isMinusPoint: boolean;
 }

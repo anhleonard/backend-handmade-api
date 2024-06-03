@@ -12,6 +12,8 @@ import { UpdateStoreDto } from './dto/update-store.dto';
 import { ProductStatus } from 'src/products/enum/product.enum';
 import { OrderStatus } from 'src/orders/enums/order-status.enum';
 import { ChangeFollowerDto } from './dto/change-follower.dto';
+import { UpdateScoreDto } from './dto/update-score.dto';
+import { TypeScore } from 'src/constants/enums';
 
 @Injectable()
 export class StoresService {
@@ -422,5 +424,25 @@ export class StoresService {
     }
 
     return await this.userRepository.save(user);
+  }
+
+  async updateScore(updateScoreDto: UpdateScoreDto) {
+    const store = await this.storeRepository.findOne({
+      where: {
+        id: updateScoreDto.storeId,
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found');
+    }
+
+    if (updateScoreDto.type === TypeScore.PLUS) {
+      store.score = store.score + updateScoreDto.amount;
+    } else if (updateScoreDto.type === TypeScore.MINUS) {
+      store.score = store.score - updateScoreDto.amount;
+    }
+
+    return await this.storeRepository.save(store);
   }
 }

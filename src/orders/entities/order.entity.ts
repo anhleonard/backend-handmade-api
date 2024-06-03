@@ -82,6 +82,9 @@ export class OrderEntity {
   @Column({ nullable: true })
   zp_trans_id: string;
 
+  @Column({ default: false })
+  isMinusPoint: boolean;
+
   @ManyToOne(() => UserEntity, (user) => user.ordersUpdateBy, {
     onDelete: 'SET NULL',
   })

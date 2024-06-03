@@ -12,7 +12,7 @@ export class BidderEntity {
 
   @Column()
   estimatedDay: number;
-  ProgressEntity;
+
   @Column()
   selfIntroduce: string;
 

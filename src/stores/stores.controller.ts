@@ -17,6 +17,7 @@ import { CreateStoreDto } from './dto/create-store.dto';
 import { UserEntity } from 'src/users/entities/user.entity';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { ChangeFollowerDto } from './dto/change-follower.dto';
+import { UpdateScoreDto } from './dto/update-score.dto';
 
 @Controller('stores')
 export class StoresController {
@@ -92,5 +93,11 @@ export class StoresController {
   @Post('/change-follower')
   async addFollower(@Body() changeFollowerDto: ChangeFollowerDto) {
     return await this.storesService.changeFollower(changeFollowerDto);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Put('/update-score')
+  async updateScore(@Body() updateScoreDto: UpdateScoreDto) {
+    return await this.storesService.updateScore(updateScoreDto);
   }
 }

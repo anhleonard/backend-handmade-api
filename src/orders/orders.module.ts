@@ -9,6 +9,7 @@ import { OrderProductEntity } from '../order_products/entities/order-products.en
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { PaymentModule } from 'src/payment/payment.module';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PaymentModule } from 'src/payment/payment.module';
       ShippingEntity,
       ProductEntity,
       VariantEntity,
+      StoreEntity,
     ]),
     forwardRef(() => ProductsModule),
     forwardRef(() => PaymentModule),
