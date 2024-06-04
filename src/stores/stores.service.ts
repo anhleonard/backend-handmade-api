@@ -15,6 +15,7 @@ import { ChangeFollowerDto } from './dto/change-follower.dto';
 import { UpdateScoreDto } from './dto/update-score.dto';
 import { TypeScore } from 'src/constants/enums';
 import { StoreStatus } from './enum/stores.enum';
+import { EmbeddingsService } from 'src/embeddings/embeddings.service';
 
 @Injectable()
 export class StoresService {
@@ -23,6 +24,7 @@ export class StoresService {
     private readonly storeRepository: Repository<StoreEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private embeddingsService: EmbeddingsService,
   ) {}
 
   async create(createStoreDto: CreateStoreDto): Promise<StoreEntity> {
@@ -111,6 +113,21 @@ export class StoresService {
         if (updateStoreDto?.notApproveReason === null) {
           updatedStore.notApproveReason === null;
         }
+      }
+
+      //update vector embedding nếu thay đổi description
+      if (
+        updateStoreDto?.description &&
+        updatedStore.description !== updateStoreDto.description
+      ) {
+        const variables = {
+          storeId: updatedStore.id,
+          description: updateStoreDto.description.toString(),
+        };
+
+        console.log(variables);
+
+        await this.embeddingsService.update(variables);
       }
 
       Object.assign(updatedStore, updateStoreDto);

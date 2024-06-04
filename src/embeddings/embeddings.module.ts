@@ -9,5 +9,6 @@ import { EmbeddingEntity } from './entities/embedding.entity';
   imports: [TypeOrmModule.forFeature([StoreEntity, EmbeddingEntity])],
   controllers: [EmbeddingsController],
   providers: [EmbeddingsService],
+  exports: [EmbeddingsService],
 })
 export class EmbeddingsModule {}

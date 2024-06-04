@@ -10,7 +10,7 @@ import { CreateEmbeddingDto } from './dto/create-embedding.dto';
 import axios from 'axios';
 import { EmbeddingEntity } from './entities/embedding.entity';
 import { SortEmbeddingDto } from './dto/sort-embedding.dto';
-import { EmbeddingStore } from 'src/constants/defined-class';
+import { UpdateEmbeddingDto } from './dto/update-embedding.dto';
 
 @Injectable()
 export class EmbeddingsService {
@@ -50,6 +50,34 @@ export class EmbeddingsService {
     }
   }
 
+  async update(updateEmbeddingDto: UpdateEmbeddingDto) {
+    const embedding = await this.embeddingRepository.findOne({
+      where: {
+        store: {
+          id: updateEmbeddingDto.storeId,
+        },
+      },
+    });
+
+    if (!embedding) {
+      throw new NotFoundException('Store embedding not found.');
+    }
+
+    const text = updateEmbeddingDto.description.toString();
+
+    try {
+      const res = await axios.post('http://localhost:8000/embed', {
+        text,
+      });
+
+      embedding.vector = res.data;
+
+      return await this.embeddingRepository.save(embedding);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   async sort(sortEmbeddingDto: SortEmbeddingDto) {
     const embeddingStores = await this.embeddingRepository.find({
       relations: {
@@ -68,6 +96,7 @@ export class EmbeddingsService {
 
     const data = {
       stores: storeDatas,
+      input: sortEmbeddingDto.desc.toString(),
     };
 
     try {
@@ -76,7 +105,19 @@ export class EmbeddingsService {
         data,
       );
 
-      return res.data;
+      const ids = res.data;
+
+      const sortedStores: StoreEntity[] = [];
+      for (let id of ids) {
+        const foundStore = await this.storeRepository.findOne({
+          where: {
+            id,
+          },
+        });
+        sortedStores.push(foundStore);
+      }
+
+      return sortedStores;
     } catch (error) {
       return error.message;
     }
