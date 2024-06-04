@@ -1,9 +1,7 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { StoreStatus } from '../enum/stores.enum';
-import { PartialType } from '@nestjs/swagger';
-import { CreateStoreDto } from './create-store.dto';
 
-export class UpdateStoreDto extends PartialType(CreateStoreDto) {
+export class UpdateStoreDto {
   @IsOptional()
   @IsString()
   name: string;
@@ -34,5 +32,13 @@ export class UpdateStoreDto extends PartialType(CreateStoreDto) {
 
   @IsOptional()
   @IsString()
-  notApproveReason: string;
+  notApproveReason: string | null;
+
+  @IsOptional()
+  @IsString()
+  frontCard: string;
+
+  @IsOptional()
+  @IsString()
+  backCard: string;
 }

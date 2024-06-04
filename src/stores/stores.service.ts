@@ -95,7 +95,23 @@ export class StoresService {
         }
       }
 
-      const updatedStore = seller.store;
+      if (updateStoreDto?.frontCard) {
+        seller.frontCard = updateStoreDto.frontCard;
+      }
+
+      if (updateStoreDto?.backCard) {
+        seller.backCard = updateStoreDto.backCard;
+      }
+
+      const updatedSeller = await this.userRepository.save(seller); //save thông tin seller sau khi đã update store
+
+      const updatedStore = updatedSeller.store;
+
+      if (updateStoreDto?.notApproveReason !== undefined) {
+        if (updateStoreDto?.notApproveReason === null) {
+          updatedStore.notApproveReason === null;
+        }
+      }
 
       Object.assign(updatedStore, updateStoreDto);
 
