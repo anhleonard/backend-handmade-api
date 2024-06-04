@@ -13,3 +13,8 @@ export type Variant = {
 
   options: VariantItem[];
 };
+
+export type EmbeddingStore = {
+  storeId: number;
+  vector: string;
+};

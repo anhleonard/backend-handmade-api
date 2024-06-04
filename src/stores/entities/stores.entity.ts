@@ -18,6 +18,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { StoreStatus } from '../enum/stores.enum';
+import { EmbeddingEntity } from 'src/embeddings/entities/embedding.entity';
 
 @Entity({ name: 'stores' })
 export class StoreEntity {
@@ -75,6 +76,10 @@ export class StoreEntity {
   @OneToOne(() => UserEntity, (user) => user.store)
   @JoinColumn()
   owner: UserEntity;
+
+  @OneToOne(() => EmbeddingEntity, (embed) => embed.store)
+  @JoinColumn()
+  embedding: EmbeddingEntity;
 
   @OneToMany(() => ProductEntity, (product) => product.store)
   products: ProductEntity[];

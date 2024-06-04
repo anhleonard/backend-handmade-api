@@ -21,6 +21,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { PaymentModule } from './payment/payment.module';
 import { TokensModule } from './tokens/tokens.module';
+import { EmbeddingsModule } from './embeddings/embeddings.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { TokensModule } from './tokens/tokens.module';
     }),
     PaymentModule,
     TokensModule,
+    EmbeddingsModule,
   ],
   controllers: [],
   providers: [],
