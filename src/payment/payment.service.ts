@@ -11,7 +11,7 @@ import { CreateAuctionPaymentDto } from './dto/create-auction-payment.dto';
 import { CreateOrderPaymentDto } from './dto/create-order-payment.dto';
 import { RefundPayment } from './dto/refund-payment.dto';
 
-const headerUrl = 'https://28b7-14-177-235-116.ngrok-free.app'; // localhost 3000
+const headerUrl = 'https://7821-118-70-129-28.ngrok-free.app'; // localhost 3000
 
 @Injectable()
 export class PaymentService {
@@ -147,9 +147,11 @@ export class PaymentService {
     };
 
     const embed_data = {
-      redirecturl: auctionPayment.isDepositPayment
-        ? `${headerUrl}/create-completed-auction`
-        : `${headerUrl}/payment-full-auction`,
+      redirecturl:
+        (auctionPayment.isDepositPayment && auctionPayment.isPaymentFull) ||
+        auctionPayment.isPaymentFull
+          ? `${headerUrl}/payment-full-auction`
+          : `${headerUrl}/create-completed-auction`,
     };
 
     const items = [{}]; // add items to order

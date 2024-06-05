@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateAuctionPaymentDto {
   @IsNotEmpty({ message: 'auctionId is not empty.' })
@@ -12,4 +12,8 @@ export class CreateAuctionPaymentDto {
   @IsNotEmpty({ message: 'isDepositPayment is not empty.' })
   @IsBoolean()
   isDepositPayment: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isPaymentFull: boolean;
 }

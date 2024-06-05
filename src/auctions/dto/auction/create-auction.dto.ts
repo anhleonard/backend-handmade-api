@@ -31,8 +31,14 @@ export class CreateAuctionDto {
   closedDate: Date;
 
   @IsNotEmpty({ message: 'shippingId can not be empty.' })
+  @IsNumber()
   shippingId: number;
 
   @IsNotEmpty({ message: 'maxDays can not be empty.' })
+  @IsNumber()
   maxDays: number;
+
+  @IsOptional()
+  @IsNumber()
+  selectedStoreId: number;
 }

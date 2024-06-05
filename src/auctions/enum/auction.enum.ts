@@ -1,4 +1,5 @@
 export enum AuctionStatus {
+  SENT_SELLER = 'SENT_SELLER',
   AUCTIONING = 'AUCTIONING',
   PROGRESS = 'PROGRESS',
   DELIVERY = 'DELIVERY',

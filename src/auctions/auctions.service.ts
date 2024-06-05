@@ -24,6 +24,7 @@ import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 import { CreatePaidAuctionDto } from './dto/auction/create-paid-auction.dto';
 import { PaidAuctionEntity } from './entities/paid-auction.entity';
 import { UpdatePaidAuctionDto } from './dto/auction/update-paid-auction.dto';
+import { StoreEntity } from 'src/stores/entities/stores.entity';
 
 @Injectable()
 export class AuctionsService {
@@ -40,6 +41,8 @@ export class AuctionsService {
     private readonly progressRepository: Repository<ProgressEntity>,
     @InjectRepository(PaidAuctionEntity)
     private readonly paidRepository: Repository<PaidAuctionEntity>,
+    @InjectRepository(StoreEntity)
+    private readonly storeRepository: Repository<StoreEntity>,
   ) {}
 
   /// --------------- auction ------------------- ///
@@ -65,7 +68,33 @@ export class AuctionsService {
     auction.owner = currentUser;
     auction.shipping = shipping;
 
-    return await this.auctionRepository.save(auction);
+    const createdAuction = await this.auctionRepository.save(auction);
+
+    //nếu có store được client select
+    if (createAuctionDto?.selectedStoreId) {
+      const store = await this.storeRepository.findOne({
+        where: {
+          id: createAuctionDto.selectedStoreId,
+        },
+      });
+
+      if (!store) {
+        throw new NotFoundException('Store not found');
+      }
+
+      const newBidder = this.bidderRepository.create();
+      newBidder.acceptedAt = new Date();
+      newBidder.bidderMoney = createAuctionDto.maxAmount;
+      newBidder.estimatedDay = createAuctionDto.maxDays;
+      newBidder.isSelected = true;
+      newBidder.selfIntroduce = store?.description;
+      newBidder.store = store;
+      newBidder.auction = createdAuction;
+
+      await this.bidderRepository.save(newBidder);
+    }
+
+    return createdAuction;
   }
 
   async update(
@@ -83,9 +112,17 @@ export class AuctionsService {
       throw new NotFoundException('Auction not found.');
     }
 
-    if (updateAuctionDto.isAccepted === true) {
+    if (updateAuctionDto.isAccepted === true && !updateAuctionDto.status) {
       auction.additionalComment = null;
       auction.status = AuctionStatus.AUCTIONING;
+    }
+
+    if (
+      updateAuctionDto.isAccepted === true &&
+      updateAuctionDto.status === AuctionStatus.SENT_SELLER
+    ) {
+      auction.additionalComment = null;
+      auction.status = AuctionStatus.SENT_SELLER;
     }
 
     if (
