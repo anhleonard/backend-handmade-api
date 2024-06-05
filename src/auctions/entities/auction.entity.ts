@@ -60,7 +60,7 @@ export class AuctionEntity {
   isPaymentDeposit: boolean; //đã thanh toán tiền cọc hay chưa
 
   @Column({ default: false })
-  isPaymentFull: boolean; //đã thanh toán hết chưa <lấy tiền seller confirm - tiền cọc>
+  isPaymentFull: boolean; //đã thanh toán hết chưa <lấy tiền seller confirm - tiền cọc trong trường hợp client không select bidder trước>
 
   @BeforeInsert()
   calculateDeposit() {

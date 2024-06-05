@@ -135,10 +135,11 @@ export class AuctionsService {
 
     if (
       updateAuctionDto?.status &&
+      updateAuctionDto?.additionalComment &&
       updateAuctionDto?.status === AuctionStatus.CANCELED
     ) {
       auction.canceledBy = currentUser;
-      auction.additionalComment;
+      auction.additionalComment = updateAuctionDto.additionalComment;
     }
 
     Object.assign(auction, updateAuctionDto);
@@ -427,6 +428,10 @@ export class AuctionsService {
       whereCondition.status = auctionStatus.status;
     }
 
+    if (auctionStatus?.status === AuctionStatus.PROGRESS) {
+      whereCondition.isPaymentFull = true;
+    }
+
     const auctions = await this.auctionRepository.find({
       where: whereCondition,
       relations: {
@@ -435,6 +440,8 @@ export class AuctionsService {
             owner: true,
           },
         },
+        canceledBy: true,
+        paids: true,
       },
     });
 
@@ -584,10 +591,10 @@ export class AuctionsService {
     return await this.paidRepository.save(paid);
   }
 
-  async updateDepositPaidAuction(updatePaidAuction: UpdatePaidAuctionDto) {
+  async updatePaidAuction(updatePaidAuction: UpdatePaidAuctionDto) {
     const paid = await this.paidRepository.findOne({
       where: {
-        type: 'deposit',
+        type: updatePaidAuction?.type,
         auction: {
           id: updatePaidAuction?.auctionId,
         },

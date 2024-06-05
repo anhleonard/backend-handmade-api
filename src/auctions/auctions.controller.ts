@@ -176,13 +176,9 @@ export class AuctionsController {
     return await this.auctionsService.createPaidAuction(createPaidAuction);
   }
 
-  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
-  @Put('/update-deposit-paid-auction')
-  async updateDepositPaidAuction(
-    @Body() updatePaidAuction: UpdatePaidAuctionDto,
-  ) {
-    return await this.auctionsService.updateDepositPaidAuction(
-      updatePaidAuction,
-    );
+  @UseGuards(AuthenticationGuard)
+  @Put('/update-paid-auction')
+  async updatePaidAuction(@Body() updatePaidAuction: UpdatePaidAuctionDto) {
+    return await this.auctionsService.updatePaidAuction(updatePaidAuction);
   }
 }
