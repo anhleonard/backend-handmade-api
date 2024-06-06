@@ -121,6 +121,13 @@ export class ProductsController {
     return await this.productsService.updateApprove(+id, data);
   }
 
+  //duyệt product by admin
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  @Put('/report-product/:id')
+  async reportProduct(@Param('id') id: string, @Body() data: UpdateProductDto) {
+    return await this.productsService.reportProduct(+id, data);
+  }
+
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   @Delete('/delete/:id')
   async remove(@Param('id') id: string) {

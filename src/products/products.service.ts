@@ -632,6 +632,23 @@ export class ProductsService {
       );
     }
 
+    const now = Date.now();
+    if (query?.overDate === 'false') {
+      builder.andWhere(
+        'EXTRACT(EPOCH FROM orders.orderAt) + 7 * 24 * 60 * 60 > :now',
+        {
+          now: now / 1000,
+        },
+      );
+    } else if (query?.overDate === 'true') {
+      builder.andWhere(
+        'EXTRACT(EPOCH FROM orders.orderAt) + 7 * 24 * 60 * 60 <= :now',
+        {
+          now: now / 1000,
+        },
+      );
+    }
+
     const page: number = parseInt(query?.page as any) || 1;
     let perPage = 25;
     if (query?.limit) {
@@ -774,5 +791,21 @@ export class ProductsService {
     const products = await builder.getMany();
 
     return products;
+  }
+
+  async reportProduct(productId: number, updatedData: UpdateProductDto) {
+    const product = await this.productRepository.findOne({
+      where: {
+        id: productId,
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found.');
+    }
+
+    Object.assign(product, updatedData);
+
+    return await this.productRepository.save(product);
   }
 }

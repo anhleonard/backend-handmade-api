@@ -9,7 +9,7 @@ export class CreateAuctionPaymentDto {
   @IsNumber()
   amount: number;
 
-  @IsNotEmpty({ message: 'isDepositPayment is not empty.' })
+  @IsOptional()
   @IsBoolean()
   isDepositPayment: boolean;
 

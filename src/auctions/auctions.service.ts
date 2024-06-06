@@ -215,7 +215,21 @@ export class AuctionsService {
       });
     }
 
-    return await builder.getMany();
+    const now = Date.now();
+
+    if (query?.overDate === 'false') {
+      builder.andWhere('EXTRACT(EPOCH FROM auctions.closedDate) > :now', {
+        now: now / 1000,
+      });
+    } else if (query?.overDate === 'true') {
+      builder.andWhere('EXTRACT(EPOCH FROM auctions.closedDate) <= :now', {
+        now: now / 1000,
+      });
+    }
+
+    const auctions = await builder.getMany();
+
+    return auctions;
   }
 
   async findOne(id: number) {
@@ -382,6 +396,23 @@ export class AuctionsService {
       }
     }
 
+    if (
+      auctionStatus.status === null ||
+      auctionStatus.status === AuctionStatus.AUCTIONING
+    ) {
+      const now = Date.now();
+
+      if (auctionStatus.overDate === false) {
+        builder.andWhere('EXTRACT(EPOCH FROM auction.closedDate) > :now', {
+          now: now / 1000,
+        });
+      } else if (auctionStatus.overDate === true) {
+        builder.andWhere('EXTRACT(EPOCH FROM auction.closedDate) <= :now', {
+          now: now / 1000,
+        });
+      }
+    }
+
     const auctions = await builder.getMany();
 
     if (!auctions) {
@@ -442,6 +473,7 @@ export class AuctionsService {
         },
         canceledBy: true,
         paids: true,
+        progresses: true,
       },
     });
 
@@ -532,6 +564,22 @@ export class AuctionsService {
       builder.andWhere('(auctions.readyToLaunch = :readyToLaunch)', {
         readyToLaunch: query?.readyToLaunch,
       });
+    }
+
+    if (
+      query?.status === 'null' ||
+      query?.status === AuctionStatus.AUCTIONING
+    ) {
+      const now = Date.now();
+      if (query?.overDate === 'false') {
+        builder.andWhere('EXTRACT(EPOCH FROM auctions.closedDate) > :now', {
+          now: now / 1000,
+        });
+      } else if (query?.overDate === 'true') {
+        builder.andWhere('EXTRACT(EPOCH FROM auctions.closedDate) <= :now', {
+          now: now / 1000,
+        });
+      }
     }
 
     const page: number = parseInt(query?.page as any) || 1;
