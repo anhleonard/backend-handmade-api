@@ -632,23 +632,6 @@ export class ProductsService {
       );
     }
 
-    const now = Date.now();
-    if (query?.overDate === 'false') {
-      builder.andWhere(
-        'EXTRACT(EPOCH FROM orders.orderAt) + 7 * 24 * 60 * 60 > :now',
-        {
-          now: now / 1000,
-        },
-      );
-    } else if (query?.overDate === 'true') {
-      builder.andWhere(
-        'EXTRACT(EPOCH FROM orders.orderAt) + 7 * 24 * 60 * 60 <= :now',
-        {
-          now: now / 1000,
-        },
-      );
-    }
-
     const page: number = parseInt(query?.page as any) || 1;
     let perPage = 25;
     if (query?.limit) {

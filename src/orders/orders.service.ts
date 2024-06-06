@@ -243,16 +243,22 @@ export class OrdersService {
 
     if (
       order.status === OrderStatus.WAITING_PAYMENT &&
-      updateOrderDto.status !== OrderStatus.PROCESSING
+      updateOrderDto.status !== OrderStatus.PROCESSING &&
+      updateOrderDto.status !== OrderStatus.OVERDATE
     ) {
-      throw new BadRequestException(`Processing after waiting payment`);
+      throw new BadRequestException(
+        `Processing or Overdate after waiting payment`,
+      );
     }
 
     if (
       order.status === OrderStatus.PROCESSING &&
-      updateOrderDto.status != OrderStatus.DELIVERED
+      updateOrderDto.status != OrderStatus.DELIVERED &&
+      updateOrderDto.status !== OrderStatus.OVERDATE
     ) {
-      throw new BadRequestException(`Delivery after processing !!!`);
+      throw new BadRequestException(
+        `Delivery or Overdate after processing !!!`,
+      );
     }
 
     if (
@@ -522,6 +528,13 @@ export class OrdersService {
   async adminFilterOrders(query: any) {
     const builder = this.orderRepository.createQueryBuilder('orders');
 
+    if (
+      query?.status === OrderStatus.WAITING_PAYMENT ||
+      query?.status === OrderStatus.PROCESSING
+    ) {
+      builder.orderBy('orders.orderAt', 'DESC');
+    }
+
     if (query?.status) {
       builder.andWhere('(orders.status = :status)', {
         status: query?.status,
@@ -556,6 +569,27 @@ export class OrdersService {
           name: `%${name}%`,
         });
     }
+
+    if (query?.storeName) {
+      const name = query.storeName.toLowerCase();
+      builder
+        .leftJoinAndSelect('orders.store', 'store')
+        .andWhere('(LOWER(store.name) LIKE :name)', {
+          name: `%${name}%`,
+        });
+    }
+
+    //check xem hạn xác nhận order đã hết chưa
+    // const now = Date.now();
+    // if (query?.overDate === 'false') {
+    //   builder.andWhere('EXTRACT(EPOCH FROM orders.orderAt) > :now', {
+    //     now: (now - 7 * 24 * 60 * 60) / 1000,
+    //   });
+    // } else if (query?.overDate === 'true') {
+    //   builder.andWhere('EXTRACT(EPOCH FROM orders.orderAt) <= :now', {
+    //     now: (now - 7 * 24 * 60 * 60) / 1000,
+    //   });
+    // }
 
     const page: number = parseInt(query?.page as any) || 1;
     let perPage = 25;
