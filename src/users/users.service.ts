@@ -236,4 +236,68 @@ export class UsersService {
     delete updatedUser.password;
     return updatedUser;
   }
+
+  async getAllUsers(query: any) {
+    const builder = this.usersRepository.createQueryBuilder('users');
+
+    if (query?.role) {
+      builder.where('(users.role = :role)', {
+        role: query?.role,
+      });
+    }
+
+    if (query?.userName) {
+      const name = query.userName.toLowerCase();
+      builder.andWhere('(LOWER(users.name) LIKE :name)', {
+        name: `%${name}%`,
+      });
+    }
+
+    if (query?.phoneNumber) {
+      builder.andWhere('(users.phoneNumber = :phoneNumber)', {
+        phoneNumber: query?.phoneNumber,
+      });
+    }
+
+    if (query?.email) {
+      const email = query.email.toLowerCase();
+      builder.andWhere('(LOWER(users.email) LIKE :email)', {
+        email: `%${email}%`,
+      });
+    }
+
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = query?.limit;
+    }
+    const total = await builder.getCount();
+
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    const users = await builder.getMany();
+
+    const customUsers: UserEntity[] = [];
+
+    for (let user of users) {
+      const foundUser = await this.usersRepository.findOne({
+        where: {
+          id: user.id,
+        },
+        relations: {
+          store: true,
+          shippings: true,
+        },
+      });
+
+      customUsers.push(foundUser);
+    }
+
+    return {
+      data: customUsers,
+      total,
+      page,
+      last_page: Math.ceil(total / perPage),
+    };
+  }
 }

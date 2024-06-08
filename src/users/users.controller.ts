@@ -28,6 +28,12 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
+  @Get('/')
+  async getAllUsers(@Query() query: any) {
+    return await this.usersService.getAllUsers(query);
+  }
+
   @Post('signup')
   async signup(
     @Body() userSignUpDto: UserSignUpDto,
