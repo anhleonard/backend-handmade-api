@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { ProductEntity } from 'src/products/entities/product.entity';
 import { VariantEntity } from 'src/variants/entities/variant.entity';
 import { UpdateOrderProductDto } from './dto/update-order-product.dto';
+import { ProductStatus } from 'src/products/enum/product.enum';
 
 @Injectable()
 export class OrderProductsService {
@@ -175,6 +176,9 @@ export class OrderProductsService {
       where: {
         client: {
           id: currentUser.id,
+        },
+        product: {
+          status: ProductStatus.SELLING,
         },
       },
       relations: {
