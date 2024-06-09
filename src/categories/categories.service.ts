@@ -41,6 +41,19 @@ export class CategoriesService {
     return categories;
   }
 
+  async findAllCategories() {
+    const categories = await this.categoryRepository.find({
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        image: true,
+      },
+    });
+
+    return categories;
+  }
+
   async findOne(id: number): Promise<CategoryEntity> {
     const category = await this.categoryRepository.findOne({
       where: { id: id },

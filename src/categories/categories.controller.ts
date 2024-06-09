@@ -38,6 +38,11 @@ export class CategoriesController {
     return await this.categoriesService.findAll();
   }
 
+  @Get('/all')
+  async findAllCategories() {
+    return await this.categoriesService.findAllCategories();
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<CategoryEntity> {
     return await this.categoriesService.findOne(+id);

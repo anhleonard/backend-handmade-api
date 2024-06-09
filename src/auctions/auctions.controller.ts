@@ -77,6 +77,11 @@ export class AuctionsController {
     return await this.auctionsService.filterAuctions(query);
   }
 
+  @Get('/top/')
+  async filterTopAuctions() {
+    return await this.auctionsService.filterTopAuctions();
+  }
+
   //get all auctions of client
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.USER]))
   @Post('/client-auctions/')

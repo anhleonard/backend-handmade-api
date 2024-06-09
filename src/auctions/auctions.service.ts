@@ -236,6 +236,33 @@ export class AuctionsService {
     return auctions;
   }
 
+  async filterTopAuctions() {
+    const builder = this.auctionRepository.createQueryBuilder('auctions');
+
+    builder
+      .leftJoin('auctions.candidates', 'candidates')
+      .addSelect('auctions.*, COUNT(candidates.id) AS candidateCount') // Đếm số lượng candidates cho mỗi auction
+      .groupBy('auctions.id') // Nhóm theo ID của auction
+      .orderBy('candidateCount', 'DESC') // Sắp xếp theo số lượng candidates giảm dần
+      .where('auctions.status = :status', {
+        status: AuctionStatus.AUCTIONING,
+      });
+
+    const page = 1;
+    let perPage = 5;
+    builder.offset((page - 1) * perPage).limit(perPage);
+
+    // Lấy auction chưa quá hạn closedDate
+    const now = Date.now();
+    builder.andWhere('auctions.closedDate > :now', {
+      now: new Date(now),
+    });
+
+    const auctions = await builder.getRawMany(); // Sử dụng getRawMany để lấy kết quả dưới dạng mảng các đối tượng
+
+    return auctions;
+  }
+
   async findOne(id: number) {
     const auction = await this.auctionRepository.findOne({
       where: {
