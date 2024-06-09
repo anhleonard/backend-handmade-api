@@ -7,6 +7,7 @@ import {
   Entity,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   Timestamp,
 } from 'typeorm';
@@ -14,6 +15,7 @@ import { ProgressEntity } from './progress.entity';
 import { AuctionStatus } from '../enum/auction.enum';
 import { BidderEntity } from './bidder.entity';
 import { PaidAuctionEntity } from './paid-auction.entity';
+import { AdditionEntity } from './addition.entity';
 
 @Entity({ name: 'auctions' })
 export class AuctionEntity {
@@ -114,4 +116,9 @@ export class AuctionEntity {
     cascade: true,
   })
   paids: PaidAuctionEntity[];
+
+  @OneToOne(() => AdditionEntity, (add) => add.auction, {
+    onDelete: 'SET NULL',
+  })
+  addition: AuctionEntity;
 }

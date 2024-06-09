@@ -1,3 +1,4 @@
+import { AdditionEntity } from 'src/auctions/entities/addition.entity';
 import { AuctionEntity } from 'src/auctions/entities/auction.entity';
 import { ProgressEntity } from 'src/auctions/entities/progress.entity';
 import { CategoryEntity } from 'src/categories/entities/category.entity';
@@ -110,4 +111,7 @@ export class UserEntity {
 
   @OneToMany(() => VariantEntity, (variant) => variant.addedBy)
   variants: VariantEntity[];
+
+  @ManyToOne(() => AdditionEntity, (add) => add.user)
+  additions: AdditionEntity[];
 }

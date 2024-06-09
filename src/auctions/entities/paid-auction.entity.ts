@@ -19,6 +19,8 @@ export class PaidAuctionEntity {
   @Column()
   zp_trans_id: string;
 
-  @ManyToOne(() => AuctionEntity, (auction) => auction.paids)
+  @ManyToOne(() => AuctionEntity, (auction) => auction.paids, {
+    onDelete: 'SET NULL',
+  })
   auction: AuctionEntity;
 }

@@ -25,6 +25,8 @@ import { CreateProgressDto } from './dto/progress/create-progress.dto';
 import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 import { CreatePaidAuctionDto } from './dto/auction/create-paid-auction.dto';
 import { UpdatePaidAuctionDto } from './dto/auction/update-paid-auction.dto';
+import { CreateAdditionDto } from './dto/addition/create-addition.dto';
+import { UpdateAdditionDto } from './dto/addition/update-addition.dto';
 
 @Controller('auctions')
 export class AuctionsController {
@@ -180,5 +182,32 @@ export class AuctionsController {
   @Put('/update-paid-auction')
   async updatePaidAuction(@Body() updatePaidAuction: UpdatePaidAuctionDto) {
     return await this.auctionsService.updatePaidAuction(updatePaidAuction);
+  }
+
+  @Delete('/delete-paid-auction/:id')
+  async deletePaidAuction(@Param('id') id: string) {
+    return await this.auctionsService.deletePaidAuction(+id);
+  }
+
+  /// --------------- additional days ------------------- ///
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Post('/create-addition')
+  async createAddition(
+    @Body() createAdditionDto: CreateAdditionDto,
+    @CurrentUser() currentUser: UserEntity,
+  ) {
+    return await this.auctionsService.createAddition(
+      createAdditionDto,
+      currentUser,
+    );
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER, Roles.USER]))
+  @Put('/update-addition/:id')
+  async updateAddition(
+    @Param('id') id: string,
+    @Body() updateAdditionDto: UpdateAdditionDto,
+  ) {
+    return await this.auctionsService.updateAddition(+id, updateAdditionDto);
   }
 }

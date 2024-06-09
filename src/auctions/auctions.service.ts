@@ -19,12 +19,14 @@ import { GetByAuctionStatus } from './dto/auction/get-auction-status.dto';
 import { UpdateAuctionStatusDto } from './dto/auction/update-status-auction.dto';
 import { CreateProgressDto } from './dto/progress/create-progress.dto';
 import { ProgressEntity } from './entities/progress.entity';
-import { UpdateProductDto } from 'src/products/dto/update-product.dto';
 import { UpdateProgressDto } from './dto/progress/update-progress.dto';
 import { CreatePaidAuctionDto } from './dto/auction/create-paid-auction.dto';
 import { PaidAuctionEntity } from './entities/paid-auction.entity';
 import { UpdatePaidAuctionDto } from './dto/auction/update-paid-auction.dto';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
+import { CreateAdditionDto } from './dto/addition/create-addition.dto';
+import { AdditionEntity } from './entities/addition.entity';
+import { UpdateAdditionDto } from './dto/addition/update-addition.dto';
 
 @Injectable()
 export class AuctionsService {
@@ -43,6 +45,8 @@ export class AuctionsService {
     private readonly paidRepository: Repository<PaidAuctionEntity>,
     @InjectRepository(StoreEntity)
     private readonly storeRepository: Repository<StoreEntity>,
+    @InjectRepository(AdditionEntity)
+    private readonly additionRepository: Repository<AdditionEntity>,
   ) {}
 
   /// --------------- auction ------------------- ///
@@ -250,6 +254,7 @@ export class AuctionsService {
         owner: true,
         canceledBy: true,
         paids: true,
+        addition: true,
       },
     });
 
@@ -671,5 +676,78 @@ export class AuctionsService {
     }
 
     return await this.auctionRepository.remove(auction);
+  }
+
+  /// --------------- additional days ------------------- ///
+  async createAddition(
+    createAdditionDto: CreateAdditionDto,
+    currentUser: UserEntity,
+  ) {
+    const auction = await this.auctionRepository.findOne({
+      where: {
+        id: createAdditionDto.auctionId,
+      },
+    });
+
+    if (!auction) {
+      throw new NotFoundException('Auction not found');
+    }
+
+    const createAddition = this.additionRepository.create(createAdditionDto);
+
+    createAddition.auction = auction;
+    createAddition.user = currentUser;
+
+    return await this.additionRepository.save(createAddition);
+  }
+
+  async updateAddition(id: number, updateAdditionDto: UpdateAdditionDto) {
+    const addition = await this.additionRepository.findOne({
+      where: { id },
+    });
+
+    if (!addition) {
+      throw new NotFoundException('Addition not found');
+    }
+
+    if (updateAdditionDto?.isAccepted === true) {
+      const bidder = await this.bidderRepository.findOne({
+        where: {
+          auction: {
+            id: updateAdditionDto?.auctionId,
+          },
+          isSelected: true,
+        },
+        relations: {
+          auction: true,
+        },
+      });
+
+      if (!bidder) {
+        throw new NotFoundException('Selected bidder not found');
+      }
+
+      bidder.estimatedDay = bidder.estimatedDay + addition.days;
+
+      await this.bidderRepository.save(bidder); //extend estimated days for bidder
+    }
+
+    Object.assign(addition, updateAdditionDto); //update addition ở đây
+
+    addition.updatedAt = new Date();
+
+    return await this.additionRepository.save(addition);
+  }
+
+  async deletePaidAuction(id: number) {
+    const paid = await this.paidRepository.findOne({
+      where: { id },
+    });
+
+    if (!paid) {
+      throw new NotFoundException('Paid not found');
+    }
+
+    return await this.paidRepository.remove(paid);
   }
 }
