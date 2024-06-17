@@ -365,7 +365,7 @@ export class StoresService {
     });
 
     if (!foundStore) {
-      throw new NotFoundException('Store not found.');
+      throw new NotFoundException('Store of this seller not found.');
     }
 
     const store = await this.storeRepository.findOne({
