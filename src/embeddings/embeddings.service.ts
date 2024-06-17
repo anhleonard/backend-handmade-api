@@ -11,6 +11,7 @@ import axios from 'axios';
 import { EmbeddingEntity } from './entities/embedding.entity';
 import { SortEmbeddingDto } from './dto/sort-embedding.dto';
 import { UpdateEmbeddingDto } from './dto/update-embedding.dto';
+import { AI_URL } from 'src/default';
 
 @Injectable()
 export class EmbeddingsService {
@@ -35,7 +36,7 @@ export class EmbeddingsService {
     const text = store.description;
 
     try {
-      const res = await axios.post('http://localhost:8000/embed', {
+      const res = await axios.post(`${AI_URL}/embed`, {
         text,
       });
 
@@ -66,7 +67,7 @@ export class EmbeddingsService {
     const text = updateEmbeddingDto.description.toString();
 
     try {
-      const res = await axios.post('http://localhost:8000/embed', {
+      const res = await axios.post(`${AI_URL}/embed`, {
         text,
       });
 
@@ -100,10 +101,7 @@ export class EmbeddingsService {
     };
 
     try {
-      const res = await axios.post(
-        'http://localhost:8000/find-relational-stores',
-        data,
-      );
+      const res = await axios.post(`${AI_URL}/find-relational-stores`, data);
 
       const ids = res.data;
 

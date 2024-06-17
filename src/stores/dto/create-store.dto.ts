@@ -21,6 +21,10 @@ export class CreateStoreDto {
   @IsString()
   mainBusiness: string;
 
+  @IsNotEmpty({ message: 'address is not empty' })
+  @IsString()
+  address: string;
+
   @IsNotEmpty({ message: 'frontCard is not empty' })
   @IsString()
   frontCard: string;

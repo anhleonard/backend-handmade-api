@@ -1,0 +1,18 @@
+## BE
+
+git pull origin master
+
+pm2 delete api
+
+pm2 cleardump
+
+pm2 save --force
+
+yarn
+
+pm2 start dist/src/main.js --name api
+
+##
+git clone new repo
+
+pm2 start "dist/src/main.js" --name api

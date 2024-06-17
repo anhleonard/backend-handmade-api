@@ -22,6 +22,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { TokenEntity } from 'src/tokens/entities/token.entity';
 import { TokensService } from 'src/tokens/tokens.service';
 import { Roles } from 'src/utility/common/user-roles.enum';
+import { SELLER_URL } from 'src/default';
 
 @Injectable()
 export class UsersService {
@@ -156,8 +157,9 @@ export class UsersService {
         to: toEmail,
         from: 'support@example.com',
         subject: 'Verify Email & Setup Store',
+        //seller domain app
         html:
-          '<h1>Verify Email & Setup Store</h1> <h2>Welcome</h2><p>To verify email and setup store, please click on this link</p><a href=http://localhost:3000/auth/uploads/' +
+          `<h1>Verify Email & Setup Store</h1> <h2>Welcome</h2><p>To verify email and setup store, please click on this link</p><a href=${SELLER_URL}/auth/uploads/` +
           token +
           '/' +
           sellerId +

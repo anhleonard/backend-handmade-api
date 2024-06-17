@@ -10,9 +10,9 @@ import { UserEntity } from 'src/users/entities/user.entity';
 import { CreateAuctionPaymentDto } from './dto/create-auction-payment.dto';
 import { CreateOrderPaymentDto } from './dto/create-order-payment.dto';
 import { RefundPayment } from './dto/refund-payment.dto';
+import { CLIENT_URL } from 'src/default';
 
-const headerUrl =
-  'https://8c5e-2405-4802-1ca0-7760-a531-eaf8-efa2-90f.ngrok-free.app'; // localhost 3000
+const headerUrl = CLIENT_URL; //client domain app
 
 @Injectable()
 export class PaymentService {
