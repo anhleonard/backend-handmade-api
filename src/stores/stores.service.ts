@@ -353,6 +353,21 @@ export class StoresService {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    const foundStore = await this.storeRepository.findOne({
+      where: {
+        owner: {
+          id: currentUser.id,
+        },
+      },
+      relations: {
+        owner: true,
+      },
+    });
+
+    if (!foundStore) {
+      throw new NotFoundException('Store not found.');
+    }
+
     const store = await this.storeRepository.findOne({
       where: {
         owner: {
@@ -364,6 +379,7 @@ export class StoresService {
         },
       },
       relations: {
+        owner: true,
         orders: {
           orderProducts: {
             product: true,
@@ -373,7 +389,7 @@ export class StoresService {
     });
 
     if (!store) {
-      throw new NotFoundException('Store not found.');
+      return [];
     }
 
     if (store.orders.length) {
