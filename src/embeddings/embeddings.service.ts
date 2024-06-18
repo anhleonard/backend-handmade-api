@@ -45,9 +45,7 @@ export class EmbeddingsService {
       embedding.vector = res.data;
       embedding.store = store;
 
-      await this.embeddingRepository.save(embedding);
-
-      return store;
+      return await this.embeddingRepository.save(embedding);
     } catch (error) {
       throw new BadRequestException(error.message);
     }
@@ -86,9 +84,7 @@ export class EmbeddingsService {
         embedding.vector = res.data;
         embedding.store = store;
 
-        await this.embeddingRepository.save(embedding);
-
-        return store;
+        return await this.embeddingRepository.save(embedding);
       } catch (error) {
         throw new BadRequestException(error.message);
       }

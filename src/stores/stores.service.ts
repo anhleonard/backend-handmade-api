@@ -125,8 +125,6 @@ export class StoresService {
           description: updateStoreDto.description.toString(),
         };
 
-        console.log(variables);
-
         await this.embeddingsService.update(variables);
       }
 
@@ -250,7 +248,14 @@ export class StoresService {
       throw new NotFoundException('Store not found');
     }
 
+    //tạo mới embedding desc cho store
+    const variables = {
+      storeId: storeId,
+    };
+    const embededData = await this.embeddingsService.create(variables);
+
     Object.assign(store, updateStoreDto);
+    store.embedding = embededData;
 
     return await this.storeRepository.save(store);
   }
