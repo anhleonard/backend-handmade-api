@@ -52,6 +52,16 @@ export class EmbeddingsService {
   }
 
   async update(updateEmbeddingDto: UpdateEmbeddingDto) {
+    const store = await this.storeRepository.findOne({
+      where: {
+        id: updateEmbeddingDto.storeId,
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Store not found.');
+    }
+
     const embedding = await this.embeddingRepository.findOne({
       where: {
         store: {
@@ -60,12 +70,27 @@ export class EmbeddingsService {
       },
     });
 
-    if (!embedding) {
-      throw new NotFoundException('Store embedding not found.');
-    }
-
     const text = updateEmbeddingDto.description.toString();
 
+    //nếu store chưa có thì tạo mới
+    if (!embedding) {
+      try {
+        const res = await axios.post(`${AI_URL}/embed`, {
+          text,
+        });
+
+        const embedding = this.embeddingRepository.create();
+
+        embedding.vector = res.data;
+        embedding.store = store;
+
+        return await this.embeddingRepository.save(embedding);
+      } catch (error) {
+        throw new BadRequestException(error.message);
+      }
+    }
+
+    //nếu có rồi thì update thôi
     try {
       const res = await axios.post(`${AI_URL}/embed`, {
         text,
