@@ -325,23 +325,26 @@ export class StoresService {
       // Lấy ngày đặt hàng của đơn hàng
       const orderDate = date.toISOString().split('T')[0]; // Chỉ lấy phần ngày, không cần giờ
 
-      // Tìm xem ngày này đã tồn tại trong mảng chưa
-      const existingDay = store.orders.find(
+      // Lấy tất cả các đơn hàng của ngày orderDate
+      const ordersOfTheDay = store.orders.filter(
         (order) =>
           new Date(order.orderAt.toString()).toISOString().split('T')[0] ===
           orderDate,
       );
 
-      if (existingDay) {
-        // Nếu ngày đã tồn tại, thêm vào mảng revenueByDay
+      if (ordersOfTheDay.length > 0) {
+        // Tính tổng doanh thu từ các đơn hàng của ngày
+        const totalRevenue = ordersOfTheDay.reduce(
+          (total, order) => total + order.provisionalAmount,
+          0,
+        );
         revenueByDay.push({
           orderDate: orderDate,
           orderAt: this.formatDate(orderDate),
-          totalRevenue: existingDay.provisionalAmount,
-          totalOrders: 1,
+          totalRevenue: totalRevenue,
+          totalOrders: ordersOfTheDay.length,
         });
       } else {
-        // Nếu ngày không tồn tại, thêm vào mảng revenueByDay với totalRevenue và totalOrders là 0
         revenueByDay.push({
           orderDate: orderDate,
           orderAt: this.formatDate(orderDate),
