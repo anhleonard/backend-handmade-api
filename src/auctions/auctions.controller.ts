@@ -34,6 +34,11 @@ export class AuctionsController {
 
   /// --------------- auction ------------------- ///
 
+  @Get('/random')
+  async randomAuctions() {
+    return await this.auctionsService.randomAuctions();
+  }
+
   @Get('/admin-filter-auctions/')
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.ADMIN]))
   async adminFilterAuctions(@Query() query: any) {

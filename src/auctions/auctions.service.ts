@@ -777,4 +777,19 @@ export class AuctionsService {
 
     return await this.paidRepository.remove(paid);
   }
+
+  async randomAuctions() {
+    return this.auctionRepository
+      .createQueryBuilder('auction')
+      .select([
+        'auction.id',
+        'auction.name',
+        'auction.maxAmount',
+        'auction.status',
+      ])
+      .where('auction.status = :status', { status: 'AUCTIONING' })
+      .orderBy('RANDOM()')
+      .limit(5)
+      .getMany();
+  }
 }

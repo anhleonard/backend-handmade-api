@@ -301,7 +301,9 @@ export class ProductsService {
           },
         },
         collections: true,
-        store: true,
+        store: {
+          followers: true,
+        },
         reviews: {
           user: true,
         },
