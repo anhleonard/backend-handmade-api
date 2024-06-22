@@ -33,7 +33,7 @@ export class EmbeddingsService {
       throw new NotFoundException('Store not found');
     }
 
-    const text = store.description;
+    const text = store.description.toString();
 
     try {
       const res = await axios.post(`${AI_URL}/embed`, {
