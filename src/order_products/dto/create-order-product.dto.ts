@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateOrderProductDto {
   @IsNotEmpty({ message: 'product id should not be empty' })
@@ -12,4 +12,8 @@ export class CreateOrderProductDto {
   @IsOptional()
   @IsNumber()
   variantId: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isSelected: boolean;
 }

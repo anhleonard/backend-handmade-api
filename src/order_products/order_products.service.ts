@@ -85,6 +85,9 @@ export class OrderProductsService {
         const newOrderProduct = {
           productUnitPrice: variant.unitPrice,
           productQuantity: createOrderProductDto.productQuantity,
+          ...(createOrderProductDto?.isSelected && {
+            isSelected: createOrderProductDto?.isSelected,
+          }),
         };
 
         const orderProduct =
@@ -100,6 +103,9 @@ export class OrderProductsService {
         const updatedOrderProduct = {
           productUnitPrice: variant.unitPrice,
           productQuantity: createOrderProductDto.productQuantity,
+          ...(createOrderProductDto?.isSelected && {
+            isSelected: createOrderProductDto?.isSelected,
+          }),
         };
 
         Object.assign(foundOrderProduct, updatedOrderProduct);
@@ -134,6 +140,9 @@ export class OrderProductsService {
         const newOrderProduct = {
           productUnitPrice: product.price,
           productQuantity: createOrderProductDto.productQuantity,
+          ...(createOrderProductDto?.isSelected && {
+            isSelected: createOrderProductDto?.isSelected,
+          }),
         };
 
         const orderProduct =
@@ -148,6 +157,9 @@ export class OrderProductsService {
         const updatedOrderProduct = {
           productUnitPrice: product.price,
           productQuantity: createOrderProductDto.productQuantity,
+          ...(createOrderProductDto?.isSelected && {
+            isSelected: createOrderProductDto?.isSelected,
+          }),
         };
         Object.assign(foundOrderProduct, updatedOrderProduct);
         return await this.orderProductRepository.save(foundOrderProduct);
