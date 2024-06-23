@@ -729,4 +729,62 @@ export class OrdersService {
       throw new BadRequestException(error.message);
     }
   }
+
+  calculateRevenue = (data: OrderEntity[]) => {
+    const result = {};
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - 8);
+
+    const formatDate = (date: Date) => {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      return `${day}/${month}`;
+    };
+
+    // Khởi tạo các ngày với doanh thu bằng 0 và số lượng đơn hàng bằng 0
+    for (let i = 1; i <= 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateStr = formatDate(date);
+      result[dateStr] = { revenue: 0, orders: 0, orderDate: dateStr };
+    }
+
+    data.forEach((order) => {
+      const orderDate = new Date(order.orderAt.toString()); // Chuyển đổi Timestamp thành Date
+      if (
+        orderDate.getTime() >= startDate.getTime() &&
+        orderDate.getTime() < today.getTime()
+      ) {
+        const dateStr = formatDate(orderDate);
+        result[dateStr].revenue += order.totalPayment;
+        result[dateStr].orders += 1;
+      }
+    });
+
+    return Object.values(result);
+  };
+
+  async getOrderSales() {
+    const orders = await this.orderRepository.find({
+      where: {
+        status: OrderStatus.SHIPPED,
+      },
+    });
+
+    const totalRevenue = orders.reduce(
+      (total, order) => total + order.provisionalAmount,
+      0,
+    );
+
+    const revenueSevenDays = this.calculateRevenue(orders);
+
+    return {
+      totalRevenue,
+      savedMoney: totalRevenue * 0.2,
+      totalOrder: orders?.length,
+      revenueSevenDays: revenueSevenDays,
+    };
+  }
 }

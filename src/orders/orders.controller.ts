@@ -25,6 +25,11 @@ import { CancelOrderDto } from './dto/cancel-order.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @Get('/order-sales')
+  async getOrderSales() {
+    return await this.ordersService.getOrderSales();
+  }
+
   @Get('/seller-filter-orders')
   @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
   async sellerFilterOrders(
