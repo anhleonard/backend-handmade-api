@@ -774,7 +774,7 @@ export class OrdersService {
     });
 
     const totalRevenue = orders.reduce(
-      (total, order) => total + order.provisionalAmount,
+      (total, order) => total + order.totalPayment,
       0,
     );
 
