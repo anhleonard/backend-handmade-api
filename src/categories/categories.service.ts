@@ -120,6 +120,15 @@ export class CategoriesService {
       });
     }
 
+    // Pagination logic
+    const page: number = parseInt(query?.page as any) || 1;
+    let perPage = 25;
+    if (query?.limit) {
+      perPage = parseInt(query.limit);
+    }
+    const total = await builder.getCount();
+    builder.offset((page - 1) * perPage).limit(perPage);
+
     const category = await builder.getOne();
 
     return category;
