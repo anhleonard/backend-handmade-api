@@ -748,7 +748,7 @@ export class OrdersService {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
       const dateStr = formatDate(date);
-      result[dateStr] = { revenue: 0, orders: 0, orderDate: dateStr };
+      result[dateStr] = { revenue: 0, totalOrder: 0, orderDate: dateStr };
     }
 
     data.forEach((order) => {
@@ -759,7 +759,7 @@ export class OrdersService {
       ) {
         const dateStr = formatDate(orderDate);
         result[dateStr].revenue += order.totalPayment;
-        result[dateStr].orders += 1;
+        result[dateStr].totalOrder += 1;
       }
     });
 
