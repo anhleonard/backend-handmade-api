@@ -25,6 +25,7 @@ import { CancelOrderDto } from './dto/cancel-order.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  // ---------------- ADMIN ----------------
   @Get('/order-sales')
   async getOrderSales() {
     return await this.ordersService.getOrderSales();

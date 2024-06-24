@@ -535,6 +535,22 @@ export class OrdersService {
       builder.orderBy('orders.orderAt', 'DESC');
     }
 
+    //NEW_ORDER có nghĩa là vừa mới order
+    if (query?.action === 'NEW_ORDER') {
+      builder.orderBy('orders.orderAt', 'DESC');
+      builder.andWhere('(orders.status != :status)', {
+        status: OrderStatus.CENCELLED,
+      });
+    }
+
+    //NEW_CANCEL có nghĩa là vừa mới hủy
+    if (query?.action === 'NEW_CANCEL') {
+      builder.orderBy('orders.updatedAt', 'DESC');
+      builder.andWhere('(orders.status = :status)', {
+        status: OrderStatus.CENCELLED,
+      });
+    }
+
     if (query?.status) {
       builder.andWhere('(orders.status = :status)', {
         status: query?.status,
@@ -784,7 +800,7 @@ export class OrdersService {
       totalRevenue,
       savedMoney: totalRevenue * 0.2,
       totalOrder: orders?.length,
-      revenueSevenDays: revenueSevenDays,
+      revenueSevenDays: revenueSevenDays.reverse(),
     };
   }
 }
