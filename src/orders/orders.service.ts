@@ -631,7 +631,9 @@ export class OrdersService {
           client: true,
           orderProducts: {
             product: true,
-            variant: true,
+            variant: {
+              variantItems: true,
+            },
           },
           updatedBy: true,
         },
