@@ -785,24 +785,39 @@ export class OrdersService {
   };
 
   async getOrderSales() {
-    const orders = await this.orderRepository.find({
+    const shippedOrders = await this.orderRepository.find({
       where: {
         status: OrderStatus.SHIPPED,
       },
     });
 
-    const totalRevenue = orders.reduce(
+    const canceledOrders = await this.orderRepository.find({
+      where: {
+        status: OrderStatus.CENCELLED,
+      },
+    });
+
+    const allOrders = await this.orderRepository.find();
+
+    const totalRevenue = shippedOrders.reduce(
       (total, order) => total + order.totalPayment,
       0,
     );
 
-    const revenueSevenDays = this.calculateRevenue(orders);
+    const revenueSevenDays = this.calculateRevenue(shippedOrders);
 
     return {
       totalRevenue,
       savedMoney: totalRevenue * 0.2,
-      totalOrder: orders?.length,
+      totalOrder: shippedOrders?.length,
       revenueSevenDays: revenueSevenDays.reverse(),
+      allOrdersNumber: allOrders?.length,
+      rateShippedOrder: allOrders?.length
+        ? Math.round((shippedOrders?.length / allOrders?.length) * 100)
+        : 0,
+      rateCanceledOrder: allOrders?.length
+        ? Math.round((canceledOrders?.length / allOrders?.length) * 100)
+        : 0,
     };
   }
 }
