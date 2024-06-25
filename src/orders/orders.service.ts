@@ -22,6 +22,7 @@ import { PaymentService } from 'src/payment/payment.service';
 import * as moment from 'moment';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { EnumScore } from 'src/constants/enums';
+import { ProductStatus } from 'src/products/enum/product.enum';
 
 @Injectable()
 export class OrdersService {
@@ -818,6 +819,101 @@ export class OrdersService {
       rateCanceledOrder: allOrders?.length
         ? Math.round((canceledOrders?.length / allOrders?.length) * 100)
         : 0,
+    };
+  }
+
+  async getSellerOrderSales(currentUser: UserEntity) {
+    const store = await this.storeRepository.findOne({
+      where: {
+        owner: {
+          id: currentUser.id,
+        },
+      },
+      relations: {
+        owner: true,
+      },
+    });
+
+    if (!store) {
+      throw new NotFoundException('Không tìm thấy cửa hàng');
+    }
+
+    const orders = await this.orderRepository.find({
+      where: {
+        store: {
+          id: store.id,
+        },
+      },
+      relations: {
+        store: true,
+      },
+    });
+
+    const result = await this.orderRepository
+      .createQueryBuilder('order')
+      .select('order.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .innerJoin('order.store', 'store')
+      .where('store.id = :storeId', { storeId: store.id })
+      .groupBy('order.status')
+      .getRawMany();
+
+    // Tính tổng doanh thu của các đơn hàng có trạng thái là SHIPPED
+    const shippedRevenueResult = await this.orderRepository
+      .createQueryBuilder('order')
+      .select('SUM(order.totalPayment)', 'totalRevenue')
+      .innerJoin('order.store', 'store')
+      .where('store.id = :storeId', { storeId: store.id })
+      .andWhere('order.status = :status', { status: OrderStatus.SHIPPED })
+      .getRawOne();
+
+    //lấy thông tin total products, total no_item, total violate
+    const resultProducts = await this.productRepository
+      .createQueryBuilder('product')
+      .select('COUNT(*)', 'totalProducts')
+      .addSelect(
+        'SUM(CASE WHEN product.status = :violateStatus THEN 1 ELSE 0 END)',
+        'violateCount',
+      )
+      .addSelect(
+        'SUM(CASE WHEN (product.status = :sellingStatus OR product.status = :offStatus) AND product.inventoryNumber = 0 THEN 1 ELSE 0 END)',
+        'outOfStockCount',
+      )
+      .innerJoin('product.store', 'store')
+      .where('store.id = :storeId', { storeId: store.id })
+      .setParameters({
+        violateStatus: ProductStatus.VIOLATE,
+        sellingStatus: ProductStatus.SELLING,
+        offStatus: ProductStatus.OFF,
+      })
+      .getRawOne();
+
+    const counts: Record<OrderStatus, number> = {
+      [OrderStatus.WAITING_PAYMENT]: 0,
+      [OrderStatus.PROCESSING]: 0,
+      [OrderStatus.SHIPPED]: 0,
+      [OrderStatus.DELIVERED]: 0,
+      [OrderStatus.CENCELLED]: 0,
+      [OrderStatus.OVERDATE]: 0,
+    };
+
+    result.forEach((row) => {
+      counts[row.status] = Number(row.count);
+    });
+
+    const totalRevenue = shippedRevenueResult?.totalRevenue
+      ? Number(shippedRevenueResult.totalRevenue)
+      : 0;
+
+    return {
+      counts,
+      totalRevenue,
+      totalOrders: orders?.length,
+      product: {
+        totalProducts: Number(resultProducts.totalProducts),
+        outOfStockCount: Number(resultProducts.outOfStockCount),
+        violateCount: Number(resultProducts.violateCount),
+      },
     };
   }
 }

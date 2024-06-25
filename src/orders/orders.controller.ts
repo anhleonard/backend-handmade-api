@@ -25,10 +25,17 @@ import { CancelOrderDto } from './dto/cancel-order.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  // ---------------- ADMIN ----------------
+  // ---------------- ADMIN ---------------- //
   @Get('/order-sales')
   async getOrderSales() {
     return await this.ordersService.getOrderSales();
+  }
+
+  // ---------------- SELLER ---------------- //
+  @Get('/seller-order-sales')
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  async getSellerOrderSales(@CurrentUser() currentUser: UserEntity) {
+    return await this.ordersService.getSellerOrderSales(currentUser);
   }
 
   @Get('/seller-filter-orders')
