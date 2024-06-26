@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { VariantCategoriesService } from './variant_categories.service';
@@ -14,6 +15,7 @@ import { AuthorizeGuard } from 'src/utility/guards/authorization.guard';
 import { CreateVariantCategoryDto } from './dto/create-variant-category.dto';
 import { CurrentUser } from 'src/utility/decorators/current-user.decorator';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { UpdateVariantCategoryDto } from './dto/update-variant-category.dto';
 
 @Controller('variant-categories')
 export class VariantCategoriesController {
@@ -30,6 +32,18 @@ export class VariantCategoriesController {
     return await this.variantCategoriesService.create(
       createVariantCategoryDto,
       currentUser,
+    );
+  }
+
+  @UseGuards(AuthenticationGuard, AuthorizeGuard([Roles.SELLER]))
+  @Put('/update/:id')
+  async update(
+    @Param('id') id: string,
+    @Body() updateVariantCategoryDto: UpdateVariantCategoryDto,
+  ) {
+    return await this.variantCategoriesService.update(
+      +id,
+      updateVariantCategoryDto,
     );
   }
 

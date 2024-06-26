@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { CreateVariantCategoryDto } from './dto/create-variant-category.dto';
 import { VariantItemEntity } from 'src/variant_items/entities/variant-item.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
+import { UpdateVariantCategoryDto } from './dto/update-variant-category.dto';
 
 @Injectable()
 export class VariantCategoriesService {
@@ -33,7 +34,7 @@ export class VariantCategoriesService {
     });
 
     if (existVariantCate) {
-      throw new BadRequestException('Variant category already exist.');
+      throw new BadRequestException('Tên phân loại đã tồn tại!');
     }
 
     if (createVariantCategoryDto.title === '') {
@@ -70,6 +71,53 @@ export class VariantCategoriesService {
     }
 
     return createdVariantCategory;
+  }
+
+  async update(id: number, updateVariantCategoryDto: UpdateVariantCategoryDto) {
+    const existVariantCate = await this.variantCategoryRepository.findOne({
+      where: { id },
+    });
+
+    if (!existVariantCate) {
+      throw new NotFoundException('Phân loại không tồn tại!');
+    }
+
+    if (!updateVariantCategoryDto?.values?.length) {
+      throw new BadRequestException('Cần ít nhất 1 tag');
+    }
+
+    // Lấy tất cả các item hiện có cho category này
+    const existingItems = await this.variantItemEntity.find({
+      where: {
+        variantCategory: {
+          id: existVariantCate.id,
+        },
+      },
+      relations: {
+        variantCategory: true,
+      },
+    });
+
+    const existingItemNames = new Set(existingItems.map((item) => item.name));
+
+    // Kiểm tra xem các giá trị mới có trùng lặp không
+    const newValues = updateVariantCategoryDto.values;
+    for (let value of newValues) {
+      if (existingItemNames.has(value)) {
+        throw new BadRequestException(`Tùy chọn '${value}' đã tồn tại!`);
+      }
+    }
+
+    // Tạo các item mới
+    const newItems = newValues.map((value) => {
+      let variantItem = this.variantItemEntity.create({ name: value });
+      variantItem.variantCategory = existVariantCate;
+      return variantItem;
+    });
+
+    await this.variantItemEntity.save(newItems);
+
+    return existVariantCate;
   }
 
   async getListVariantCategories(currentUser: UserEntity) {
