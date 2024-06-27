@@ -420,7 +420,12 @@ export class AuctionsService {
       }
 
       if (statusValue === null) {
-        builder.andWhere('auction.status IS NULL');
+        builder.andWhere(
+          'auction.status IS NULL OR auction.status = :sentSellerStatus',
+          {
+            sentSellerStatus: AuctionStatus.SENT_SELLER,
+          },
+        );
       } else {
         builder.andWhere('auction.status = :status', {
           status: statusValue,
@@ -463,6 +468,7 @@ export class AuctionsService {
           candidates: true,
           progresses: true,
           canceledBy: true,
+          paids: true,
         },
       });
 
@@ -779,6 +785,8 @@ export class AuctionsService {
   }
 
   async randomAuctions() {
+    const currentDate = new Date();
+
     return this.auctionRepository
       .createQueryBuilder('auction')
       .select([
@@ -788,6 +796,9 @@ export class AuctionsService {
         'auction.status',
       ])
       .where('auction.status = :status', { status: 'AUCTIONING' })
+      .andWhere('auction.closedDate > :currentDate', {
+        currentDate: currentDate.toISOString(),
+      })
       .orderBy('RANDOM()')
       .limit(5)
       .getMany();
