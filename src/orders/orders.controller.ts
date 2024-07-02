@@ -25,6 +25,11 @@ import { CancelOrderDto } from './dto/cancel-order.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @Get('/rating/:storeId')
+  async getOrderRating(@Param('storeId') storeId: string) {
+    return await this.ordersService.getOrderRating(+storeId);
+  }
+
   // ---------------- ADMIN ---------------- //
   @Get('/order-sales')
   async getOrderSales() {

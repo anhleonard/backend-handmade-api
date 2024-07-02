@@ -23,6 +23,7 @@ import * as moment from 'moment';
 import { StoreEntity } from 'src/stores/entities/stores.entity';
 import { EnumScore } from 'src/constants/enums';
 import { ProductStatus } from 'src/products/enum/product.enum';
+import { Roles } from 'src/utility/common/user-roles.enum';
 
 @Injectable()
 export class OrdersService {
@@ -915,5 +916,40 @@ export class OrdersService {
         violateCount: Number(resultProducts.violateCount),
       },
     };
+  }
+
+  async getOrderRating(storeId: number) {
+    const totalOrder = await this.orderRepository.findAndCount({
+      where: {
+        store: {
+          id: storeId,
+        },
+      },
+      relations: {
+        store: true,
+      },
+    });
+
+    const totalCanceledOrder = await this.orderRepository.findAndCount({
+      where: {
+        store: {
+          id: storeId,
+        },
+        status: OrderStatus.CENCELLED,
+        updatedBy: {
+          role: Roles.SELLER,
+        },
+      },
+      relations: {
+        store: true,
+        updatedBy: true,
+      },
+    });
+
+    if (totalOrder[1] === 0) return 0;
+
+    const result = (totalCanceledOrder[1] / totalOrder[1]) * 100;
+
+    return result.toFixed(2);
   }
 }
