@@ -17,4 +17,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString({ message: 'avatar should be string' })
   avatar: string;
+
+  @IsOptional()
+  @IsString({ message: 'bank name should be string' })
+  bankName: string;
+
+  @IsOptional()
+  @IsString({ message: 'account number should be string' })
+  accountNumber: string;
 }

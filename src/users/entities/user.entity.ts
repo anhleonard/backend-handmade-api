@@ -70,6 +70,12 @@ export class UserEntity {
   @Column({ nullable: true })
   backCard: string;
 
+  @Column({ nullable: true })
+  bankName: string; //tên ngân hàng nhận tiền (nhà bán)
+
+  @Column({ nullable: true })
+  accountNumber: string; //số tk ngân hàng của người nhận (nhà bán)
+
   @OneToMany(() => CategoryEntity, (cat) => cat.addedBy)
   categories: CategoryEntity[];
 
