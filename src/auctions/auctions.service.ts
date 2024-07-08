@@ -803,4 +803,53 @@ export class AuctionsService {
       .limit(5)
       .getMany();
   }
+
+  async getAuctionSales() {
+    const auctions = await this.auctionRepository.find({
+      where: {
+        status: AuctionStatus.COMPLETED,
+      },
+      relations: ['candidates'],
+    });
+
+    if (!auctions) {
+      return {
+        totalCompletedAuction: 0,
+        totalMoney: 0,
+      };
+    }
+
+    // Tính tổng bidderMoney của các candidates có isSelected là true
+    const totalBidderMoney = auctions.reduce((total, auction) => {
+      const selectedCandidate = auction.candidates.find(
+        (candidate) => candidate.isSelected,
+      );
+      if (selectedCandidate) {
+        return total + selectedCandidate.bidderMoney;
+      }
+      return total;
+    }, 0);
+
+    // Lọc các auctions và chỉ giữ lại candidates có isSelected là true
+    // const filteredAuctions = auctions
+    //   .map((auction) => {
+    //     const selectedCandidate = auction.candidates.find(
+    //       (candidate) => candidate.isSelected,
+    //     );
+    //     if (selectedCandidate) {
+    //       return {
+    //         ...auction,
+    //         candidates: [selectedCandidate],
+    //       };
+    //     }
+    //     return null;
+    //   })
+    //   .filter((auction) => auction !== null);
+
+    return {
+      totalCompletedAuction: auctions?.length ?? 0,
+      totalMoney: totalBidderMoney ?? 0,
+      // auctions: filteredAuctions,
+    };
+  }
 }

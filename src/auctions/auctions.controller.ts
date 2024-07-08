@@ -34,6 +34,11 @@ export class AuctionsController {
 
   /// --------------- auction ------------------- ///
 
+  @Get('/sales')
+  async getAuctionSales() {
+    return await this.auctionsService.getAuctionSales();
+  }
+
   @Get('/random')
   async randomAuctions() {
     return await this.auctionsService.randomAuctions();
