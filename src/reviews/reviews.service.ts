@@ -47,21 +47,10 @@ export class ReviewsService {
       throw new NotFoundException('Product not found.');
     }
 
-    let review = await this.findCreatedReview(
-      currentUser.id,
-      createReviewDto.productId,
-      createReviewDto.orderId,
-    );
-
-    if (!review) {
-      review = this.reviewRepository.create(createReviewDto);
-      review.user = currentUser;
-      review.product = product;
-      review.order = order;
-    } else {
-      (review.comment = createReviewDto.comment),
-        (review.ratings = createReviewDto.ratings);
-    }
+    let review = this.reviewRepository.create(createReviewDto);
+    review.user = currentUser;
+    review.product = product;
+    review.order = order;
 
     const createdReview = await this.reviewRepository.save(review);
 
